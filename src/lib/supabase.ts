@@ -1,9 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-
 let supabase: any = null;
 
-export function getSupabase() {
+export async function getSupabase() {
   if (!supabase) {
+    const { createClient } = await import('@supabase/supabase-js');
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 

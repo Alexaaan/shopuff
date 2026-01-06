@@ -3,7 +3,7 @@ import { getSupabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const { data: orders, error } = await supabase
       .from('orders')
       .select(`
@@ -44,7 +44,7 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const { id, statut } = await request.json();
 
     if (!id || !statut) {

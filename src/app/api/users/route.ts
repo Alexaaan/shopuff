@@ -3,7 +3,7 @@ import { getSupabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     const { data: users, error } = await supabase
       .from('users')
       .select('*');
