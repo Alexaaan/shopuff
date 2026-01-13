@@ -66,7 +66,7 @@ export default function Orders() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div>
+    <div className="admin-dashboard">
       <h1>Gestion des Commandes</h1>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>

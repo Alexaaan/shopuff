@@ -51,7 +51,7 @@ export default function Stats() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div>
+    <div className="admin-dashboard">
       <h1>Statistiques</h1>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
         <div style={{ border: '1px solid #ddd', padding: '20px', textAlign: 'center' }}>

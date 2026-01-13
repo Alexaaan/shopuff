@@ -51,7 +51,7 @@ export default function AdminUsers() {
     }
   }
   return (
-    <div className="admin-users">
+    <div className="admin-dashboard admin-users">
       <h1>Gestion des Utilisateurs</h1>
       <form onSubmit={createUser} className="user-form">
         <input
