@@ -4,7 +4,6 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "shopuff | Chichas Cosmiques",
   description: "Découvrez notre sélection exclusive de chichas premium. Saveurs cosmiques et expériences uniques.",
-  themeColor: "#8B5CF6",
   manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
@@ -14,6 +13,10 @@ export const metadata: Metadata = {
     description: "Découvrez notre sélection exclusive de chichas premium",
     type: "website",
   },
+};
+
+export const viewport = {
+  themeColor: "#8B5CF6",
 };
 
 export default function RootLayout({
