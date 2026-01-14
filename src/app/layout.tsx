@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Découvrez notre sélection exclusive. Saveurs garantie et expériences uniques.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo4.png",
+    icon: "/logo.png",
   },
   openGraph: {
     title: "shopuff",
