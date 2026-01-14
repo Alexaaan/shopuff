@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import Chat from '@/components/Chat';
+import dynamic from 'next/dynamic';
+
+const Chat = dynamic(() => import('@/components/Chat'), { ssr: false });
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 
