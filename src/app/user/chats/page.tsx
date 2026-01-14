@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { Chat } from '@/components/Chat';
+import Chat from '@/components/Chat';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 

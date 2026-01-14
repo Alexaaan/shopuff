@@ -25,7 +25,7 @@ interface ChatProps {
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
-export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
+const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -173,3 +173,5 @@ export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
     </div>
   );
 };
+
+export default Chat;

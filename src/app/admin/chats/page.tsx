@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Chat } from '@/components/Chat';
+import dynamic from 'next/dynamic';
+
+const Chat = dynamic(() => import('@/components/Chat'), { ssr: false });
 
 interface Order {
   id: number;
