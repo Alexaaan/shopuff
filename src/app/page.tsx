@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { HeroSection } from '@/components/HeroSection';
 import { ProductsSection } from '@/components/ProductsSection';
 import { Cart } from '@/components/Cart';
@@ -11,6 +12,7 @@ import { useAuth } from '@/lib/AuthContext';
 export default function Home() {
   const { user, isLoading } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const router = useRouter();
 
   if (isLoading) {
     return (
@@ -24,9 +26,13 @@ export default function Home() {
     return <LoginScreen />;
   }
 
+  const handleChatClick = () => {
+    router.push('/user/chats');
+  };
+
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <Header onCartClick={() => setIsCartOpen(true)} />
+      <Header onCartClick={() => setIsCartOpen(true)} onChatClick={handleChatClick} />
       <main>
         <HeroSection />
         <ProductsSection />
@@ -35,3 +41,4 @@ export default function Home() {
     </div>
   );
 }
+

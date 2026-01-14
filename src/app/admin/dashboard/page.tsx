@@ -12,6 +12,9 @@ export default function Dashboard() {
         <a href="/admin/orders" className="keypad-btn">
           📋<br />Commandes
         </a>
+        <a href="/admin/chats" className="keypad-btn">
+          💬<br />Chat Commande
+        </a>
         <a href="/admin/stats" className="keypad-btn">
           📊<br />Statistiques
         </a>
