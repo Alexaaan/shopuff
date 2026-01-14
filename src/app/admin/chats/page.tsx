@@ -7,6 +7,7 @@ interface Order {
   id: number;
   utilisateur_id: number;
   statut: string;
+  debut_commande: string;
   users: {
     nom: string;
     prenom: string;
@@ -72,7 +73,7 @@ export default function AdminChats() {
               {order.order_products.map(op => `${op.quantite}x ${op.products.nom}`).join(', ')}
             </p>
             <p className="order-date">
-              {new Date(order.debut_commande).toLocaleDateString()}
+              {order.debut_commande ? new Date(order.debut_commande).toLocaleDateString() : ''}
             </p>
           </div>
         ))}

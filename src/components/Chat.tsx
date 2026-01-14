@@ -8,7 +8,9 @@ interface Message {
   id: number;
   message: string;
   created_at: string;
+  user_id: number;
   users: {
+    id: number;
     nom: string;
     prenom: string;
   };
