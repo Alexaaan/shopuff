@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { Chat } from '@/components/Chat';
+import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 interface Order {
   id: number;
@@ -54,6 +56,7 @@ export default function UserChats() {
     return (
       <div className="admin-chats">
         <button onClick={() => setSelectedOrder(null)}>← Retour à mes conversations</button>
+        <Link href="/"><button>Retour à l'accueil</button></Link>
         <Chat orderId={selectedOrder.id} onClose={() => setSelectedOrder(null)} orderUserId={user?.id} />
       </div>
     );

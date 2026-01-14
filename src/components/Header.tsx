@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ShoppingCart, User, LogOut, MessageCircle } from 'lucide-react';
+import { ShoppingCart, User, LogOut, MessageCircle, Shield } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useState, useEffect } from 'react';
@@ -62,6 +62,18 @@ export const Header = ({ onCartClick, onChatClick }: HeaderProps) => {
                     title="Chat commande en cours"
                   >
                     <MessageCircle className="w-6 h-6" />
+                  </motion.button>
+                )}
+
+                {user?.role === 'admin' && (
+                  <motion.button
+                    onClick={() => window.location.href = '/admin/dashboard'}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    title="Dashboard Admin"
+                  >
+                    <Shield className="w-6 h-6" />
                   </motion.button>
                 )}
 

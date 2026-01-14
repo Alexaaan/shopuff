@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { Send } from 'lucide-react';
+import { Send, X } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 interface Message {
   id: number;
@@ -22,19 +23,52 @@ interface ChatProps {
   orderUserId?: number;
 }
 
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+
 export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const lastMessagesLength = useRef(0);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     fetchMessages();
     requestNotificationPermission();
-    const interval = setInterval(fetchMessages, 5000); // Poll every 5 seconds
-    return () => clearInterval(interval);
-  }, [orderId]);
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`messages:${orderId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `order_id=eq.${orderId}`
+      }, (payload) => {
+        const newMsg = payload.new as Message;
+        setMessages(prev => [...prev, newMsg]);
+
+        // Show notification if from other user and document is hidden
+        if (newMsg.users && newMsg.users.id !== user?.id) {
+          if (document.hidden && Notification.permission === 'granted') {
+            new Notification(`Nouveau message de ${newMsg.users.prenom} ${newMsg.users.nom}`, {
+              body: newMsg.message,
+              icon: '/logo.png',
+            });
+          }
+          // Play sound
+          const audio = new Audio('/notification.mp3'); // Assume we have a sound file
+          audio.play().catch(() => {}); // Ignore errors if no sound file
+        }
+      })
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId, user?.id]);
 
   const requestNotificationPermission = () => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -47,22 +81,7 @@ export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
     try {
       const response = await fetch(`/api/messages?orderId=${orderId}`);
       const data = await response.json();
-      if (data.length > lastMessagesLength.current && lastMessagesLength.current > 0) {
-        // New messages arrived
-        const newMsgs = data.slice(lastMessagesLength.current);
-        newMsgs.forEach((msg: Message) => {
-          if (msg.users && msg.users.id !== user?.id) {
-            if (Notification.permission === 'granted') {
-              new Notification(`Nouveau message de ${msg.users.prenom} ${msg.users.nom}`, {
-                body: msg.message,
-                icon: '/logo.png',
-              });
-            }
-          }
-        });
-      }
       setMessages(data);
-      lastMessagesLength.current = data.length;
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -85,11 +104,34 @@ export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        setMessages(prev => [...prev, result.message]);
         setNewMessage('');
-        fetchMessages(); // Refresh messages
       }
     } catch (error) {
       console.error('Error sending message:', error);
+    }
+  };
+
+  const cancelOrder = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: orderId, statut: 'annulee' })
+      });
+
+      if (response.ok) {
+        alert('Commande annulée avec succès');
+        onClose();
+      } else {
+        alert('Erreur lors de l\'annulation de la commande');
+      }
+    } catch (error) {
+      console.error('Error canceling order:', error);
+      alert('Erreur serveur');
     }
   };
 
@@ -98,8 +140,15 @@ export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   return (
     <div className="chat-modal">
       <div className="chat-header">
-        <h3>Chat Commande #{orderId}</h3>
-        <button onClick={onClose}>Fermer</button>
+        <h3>Chat de la commande #{orderId}</h3>
+        <div className="flex gap-2">
+          {user?.id === orderUserId && (
+            <button onClick={cancelOrder} className="cancel-button" title="Annuler la commande">
+              <X className="w-4 h-4" /> Annuler
+            </button>
+          )}
+          <button onClick={onClose}>Fermer</button>
+        </div>
       </div>
       <div className="chat-messages">
         {messages.map((msg) => (
