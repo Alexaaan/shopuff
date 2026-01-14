@@ -4,15 +4,15 @@ import { CartProvider } from "@/lib/CartContext";
 import { AuthProvider } from "@/lib/AuthContext";
 
 export const metadata: Metadata = {
-  title: "shopuff | Chichas Cosmiques",
-  description: "Découvrez notre sélection exclusive de chichas premium. Saveurs cosmiques et expériences uniques.",
+  title: "shopuff",
+  description: "Découvrez notre sélection exclusive. Saveurs garantie et expériences uniques.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.png",
+    icon: "/logo4.png",
   },
   openGraph: {
-    title: "shopuff | Chichas Cosmiques",
-    description: "Découvrez notre sélection exclusive de chichas premium",
+    title: "shopuff",
+    description: "Découvrez notre sélection exclusive",
     type: "website",
   },
 };
