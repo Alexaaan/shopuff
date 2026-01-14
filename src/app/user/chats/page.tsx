@@ -66,7 +66,10 @@ export default function UserChats() {
 
   return (
     <div className="admin-chats">
-      <h1>Mes Conversations de Commandes</h1>
+      <div className="flex items-center gap-4 mb-4">
+        <Link href="/"><button>Retour à l'accueil</button></Link>
+        <h1>Mes Conversations de Commandes</h1>
+      </div>
       <div className="conversations-list">
         {orders.map(order => (
           <div

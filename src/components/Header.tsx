@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ShoppingCart, User, LogOut, MessageCircle, Shield } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useState, useEffect } from 'react';
@@ -15,6 +16,7 @@ export const Header = ({ onCartClick, onChatClick }: HeaderProps) => {
   const { cart } = useCart();
   const { user, logout } = useAuth();
   const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (user) {

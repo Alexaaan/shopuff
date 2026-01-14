@@ -6,7 +6,6 @@ import { AuthProvider } from "@/lib/AuthContext";
 export const metadata: Metadata = {
   title: "shopuff",
   description: "Découvrez notre sélection exclusive. Saveurs garantie et expériences uniques.",
-  manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
   },
