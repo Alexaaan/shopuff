@@ -17,6 +17,8 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
   const handleOrder = async () => {
     if (cart.length === 0 || !user) return;
 
+    if (!confirm('Êtes-vous sûr de vouloir commander ?')) return;
+
     const utilisateur_id = user.id;
 
     const orderData = {
@@ -64,7 +66,7 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
               onClick={onClose}
             />
             <motion.div
-              className="fixed bottom-0 left-0 right-0 bg-card rounded-t-2xl p-6 z-50 max-h-[80vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 glass-card rounded-t-2xl p-6 z-50 max-h-[80vh] overflow-y-auto"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -128,12 +130,20 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
                         {total.toFixed(2)}€
                       </span>
                     </div>
-                    <button
-                      onClick={handleOrder}
-                      className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-                    >
-                      Commander
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleOrder}
+                        className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                      >
+                        Commander
+                      </button>
+                      <button
+                        onClick={onClose}
+                        className="flex-1 border-2 border-primary text-primary py-3 rounded-lg font-semibold hover:bg-primary hover:text-primary-foreground transition-all"
+                      >
+                        Continuer les achats
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
