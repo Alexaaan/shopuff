@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { Send } from 'lucide-react';
+import { getSupabase } from '@/lib/supabase';
 
 interface Message {
   id: number;
@@ -30,7 +31,49 @@ export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
 
   useEffect(() => {
     fetchMessages();
+    subscribeToMessages();
+    requestNotificationPermission();
   }, [orderId]);
+
+  const requestNotificationPermission = () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  };
+
+  const subscribeToMessages = async () => {
+    const supabase = await getSupabase();
+    const channel = supabase
+      .channel(`messages-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `order_id=eq.${orderId}`,
+        },
+        (payload: any) => {
+          const newMessage = payload.new as Message;
+          if (newMessage.user_id !== user?.id) {
+            // Show notification
+            if (Notification.permission === 'granted') {
+              new Notification(`Nouveau message de ${newMessage.users.prenom} ${newMessage.users.nom}`, {
+                body: newMessage.message,
+                icon: '/logo.png',
+              });
+            }
+            // Refresh messages
+            fetchMessages();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   const fetchMessages = async () => {
     try {
