@@ -8,7 +8,7 @@ export const HeroSection = () => {
   return (
     <section
       id="accueil"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16"
     >
       {/* Background Effects */}
       <StarField />
@@ -66,7 +66,7 @@ export const HeroSection = () => {
           >
             <span className="cosmic-gradient-text glow-text">Saveurs</span>
             <br />
-            <span className="text-foreground">Cosmiques</span>
+            <span className="text-foreground">Uniques</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -76,8 +76,8 @@ export const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="font-poppins text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
-            Découvrez notre sélection exclusive de chichas premium.
-            Chaque saveur est une expérience unique qui transporte vos sens vers de nouveaux horizons.
+            Découvrez des puffs inspirées des merveilles de l'univers, alliant
+            saveurs premium et gout.
           </motion.p>
 
           {/* CTA Buttons */}

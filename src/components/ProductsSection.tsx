@@ -67,12 +67,11 @@ export const ProductsSection = () => {
 
           <h2 className="font-fredoka text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             <span className="chicha-gradient-text">Collection</span>{" "}
-            <span className="text-foreground">Cosmique</span>
+            <span className="text-foreground"></span>
           </h2>
 
           <p className="font-poppins text-lg text-muted-foreground max-w-2xl mx-auto">
-            Chaque chicha est une œuvre d'art inspirée des merveilles de
-            l'univers, créée avec des saveurs premium et des matériaux de qualité supérieure.
+            Explorez notre sélection exclusive
           </p>
         </motion.div>
 

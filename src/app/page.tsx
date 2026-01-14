@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { HeroSection } from '@/components/HeroSection';
 import { ProductsSection } from '@/components/ProductsSection';
-import { AboutSection } from '@/components/AboutSection';
 import { Cart } from '@/components/Cart';
 import { Header } from '@/components/Header';
 import { LoginScreen } from '@/components/LoginScreen';
@@ -26,12 +25,11 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <Header onCartClick={() => setIsCartOpen(true)} />
       <main>
         <HeroSection />
         <ProductsSection />
-        <AboutSection />
       </main>
       <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
