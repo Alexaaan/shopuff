@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { Send } from 'lucide-react';
-import { getSupabase } from '@/lib/supabase';
 
 interface Message {
   id: number;
@@ -28,11 +27,13 @@ export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const lastMessagesLength = useRef(0);
 
   useEffect(() => {
     fetchMessages();
-    subscribeToMessages();
     requestNotificationPermission();
+    const interval = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
   }, [orderId]);
 
   const requestNotificationPermission = () => {
@@ -41,45 +42,27 @@ export const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
     }
   };
 
-  const subscribeToMessages = async () => {
-    const supabase = await getSupabase();
-    const channel = supabase
-      .channel(`messages-${orderId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `order_id=eq.${orderId}`,
-        },
-        (payload: any) => {
-          const newMessage = payload.new as Message;
-          if (newMessage.user_id !== user?.id) {
-            // Show notification
-            if (Notification.permission === 'granted') {
-              new Notification(`Nouveau message de ${newMessage.users.prenom} ${newMessage.users.nom}`, {
-                body: newMessage.message,
-                icon: '/logo.png',
-              });
-            }
-            // Refresh messages
-            fetchMessages();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
 
   const fetchMessages = async () => {
     try {
       const response = await fetch(`/api/messages?orderId=${orderId}`);
       const data = await response.json();
+      if (data.length > lastMessagesLength.current && lastMessagesLength.current > 0) {
+        // New messages arrived
+        const newMsgs = data.slice(lastMessagesLength.current);
+        newMsgs.forEach((msg: Message) => {
+          if (msg.users && msg.users.id !== user?.id) {
+            if (Notification.permission === 'granted') {
+              new Notification(`Nouveau message de ${msg.users.prenom} ${msg.users.nom}`, {
+                body: msg.message,
+                icon: '/logo.png',
+              });
+            }
+          }
+        });
+      }
       setMessages(data);
+      lastMessagesLength.current = data.length;
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
