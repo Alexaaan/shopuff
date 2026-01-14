@@ -45,7 +45,7 @@ export const ProductsSection = () => {
   }
 
   return (
-    <section id="produits" className="relative py-24 md:py-32">
+    <section id="produits" className="relative py-16 md:py-24">
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
 
@@ -56,15 +56,8 @@ export const ProductsSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-secondary/30 mb-6">
-            <Sparkles className="w-4 h-4 text-secondary" />
-            <span className="text-sm font-poppins text-muted-foreground">
-              Nos créations
-            </span>
-          </div>
-
           <h2 className="font-fredoka text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             <span className="chicha-gradient-text">Collection</span>{" "}
             <span className="text-foreground"></span>
@@ -103,7 +96,7 @@ export const ProductsSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="text-center mt-16"
+          className="text-center mt-8"
         >
           <motion.button
             className="px-8 py-4 rounded-full font-fredoka font-semibold text-lg border-2 border-secondary/50 text-secondary hover:bg-secondary hover:text-secondary-foreground transition-all duration-300"

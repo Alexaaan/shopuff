@@ -8,7 +8,7 @@ export const HeroSection = () => {
   return (
     <section
       id="accueil"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-0"
     >
       {/* Background Effects */}
       <StarField />
@@ -49,7 +49,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-primary/30 mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-primary/30 mb-4"
           >
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-poppins text-muted-foreground">
@@ -62,7 +62,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-fredoka text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight"
+            className="font-fredoka text-5xl md:text-7xl lg:text-8xl font-bold mb-3 leading-tight"
           >
             <span className="cosmic-gradient-text glow-text">Saveurs</span>
             <br />
@@ -74,7 +74,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="font-poppins text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
+            className="font-poppins text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6"
           >
             Découvrez des puffs inspirées des merveilles de l'univers, alliant
             saveurs premium et gout.
@@ -89,25 +89,12 @@ export const HeroSection = () => {
           >
             <motion.a
               href="#produits"
-              className="group relative px-8 py-4 rounded-full font-fredoka font-semibold text-lg overflow-hidden"
+              className="px-8 py-4 rounded-full font-fredoka font-semibold text-lg border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 flex items-center gap-2"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-primary via-secondary to-accent" />
-              <span className="absolute inset-0 bg-gradient-to-r from-primary via-secondary to-accent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
-              <span className="relative text-primary-foreground flex items-center gap-2">
-                Explorer la collection
-                <Sparkles className="w-5 h-5" />
-              </span>
-            </motion.a>
-
-            <motion.a
-              href="#apropos"
-              className="px-8 py-4 rounded-full font-fredoka font-semibold text-lg border-2 border-foreground/20 text-foreground hover:border-primary hover:text-primary transition-colors duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Notre histoire
+              Explorer la collection
+              <Sparkles className="w-5 h-5" />
             </motion.a>
           </motion.div>
         </div>
