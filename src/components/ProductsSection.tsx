@@ -6,6 +6,7 @@ import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Product {
+  id?: number;
   nom: string;
   prix: number;
   image: string;
@@ -31,12 +32,12 @@ export const ProductsSection = () => {
       console.error('Error loading products:', error);
       // Fallback products for demo
       setProducts([
-        { nom: "Chicha Galaxy Blue", prix: 29.99, image: "/IMG_1530.png" },
-        { nom: "Chicha Nebula Red", prix: 34.99, image: "/IMG_1530.png" },
-        { nom: "Chicha Cosmic Green", prix: 27.99, image: "/IMG_1530.png" },
-        { nom: "Chicha Star Dust", prix: 39.99, image: "/IMG_1530.png" },
-        { nom: "Chicha Aurora", prix: 32.99, image: "/IMG_1530.png" },
-        { nom: "Chicha Meteor", prix: 36.99, image: "/IMG_1530.png" },
+        { id: 1, nom: "Chicha Galaxy Blue", prix: 29.99, image: "/IMG_1530.png" },
+        { id: 2, nom: "Chicha Nebula Red", prix: 34.99, image: "/IMG_1530.png" },
+        { id: 3, nom: "Chicha Cosmic Green", prix: 27.99, image: "/IMG_1530.png" },
+        { id: 4, nom: "Chicha Star Dust", prix: 39.99, image: "/IMG_1530.png" },
+        { id: 5, nom: "Chicha Aurora", prix: 32.99, image: "/IMG_1530.png" },
+        { id: 6, nom: "Chicha Meteor", prix: 36.99, image: "/IMG_1530.png" },
       ]);
     } finally {
       setLoading(false);
@@ -84,7 +85,8 @@ export const ProductsSection = () => {
           ) : (
             products.map((product, index) => (
               <ProductCard
-                key={index}
+                key={product.id || index}
+                id={product.id || index + 1}
                 name={product.nom}
                 price={product.prix}
                 image={product.image}

@@ -1,23 +1,35 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
+import { getSupabase } from '@/lib/supabase';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { secret_code } = await request.json();
 
-    // For simplicity, assume a hardcoded admin or check from supabase
-    // In real app, check user credentials
-    if (email === 'admin@example.com' && password === 'password') {
-      const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '1h' });
-      const response = NextResponse.json({ success: true });
-      response.cookies.set('token', token, { httpOnly: true, path: '/' });
-      return response;
+    if (!secret_code) {
+      return NextResponse.json({ error: 'Code secret requis' }, { status: 400 });
     }
 
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    const supabase = await getSupabase();
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('secret_code', secret_code)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !user) {
+      return NextResponse.json({ error: 'Code secret invalide' }, { status: 401 });
+    }
+
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+    const response = NextResponse.json({ success: true, user: { id: user.id, nom: user.nom, prenom: user.prenom, role: user.role } });
+    response.cookies.set('token', token, { httpOnly: true, path: '/' });
+    return response;
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Login error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

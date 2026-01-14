@@ -68,28 +68,18 @@ body {
   background-image: var(--gradient-nebula);
   background-attachment: fixed;
   font-feature-settings: "rlig" 1, "calt" 1;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Fredoka', cursive;
 }
 
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: calc(env(safe-area-inset-top, 0px) + 150px);
-    background-image: url(/header.png);
-    background-size: cover;
-    background-position: center;
-    z-index: 10;
-}
 
 main {
     padding: 2rem 1rem;
     background: transparent;
-    margin-top: calc(env(safe-area-inset-top, 0px) + 150px);
+    margin-top: 80px;
 }
 
 

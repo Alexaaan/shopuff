@@ -63,6 +63,24 @@ export default function Orders() {
     }
   };
 
+  const updateOrderPayment = async (id: number, payment_method: string) => {
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, payment_method })
+      });
+
+      if (response.ok) {
+        await fetchOrders(); // Refresh the list
+      } else {
+        console.error('Error updating payment method');
+      }
+    } catch (error) {
+      console.error('Error updating payment method:', error);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -97,7 +115,16 @@ export default function Orders() {
               </td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order.total}€</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order.statut}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order.payment_method}</td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <select
+                  value={order.payment_method || ''}
+                  onChange={(e) => updateOrderPayment(order.id, e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="espece">Espèces</option>
+                  <option value="carte_bleue">Carte bleue</option>
+                </select>
+              </td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                 {new Date(order.debut_commande).toLocaleDateString()}
               </td>

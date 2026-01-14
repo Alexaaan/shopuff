@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { ShoppingBag, Star } from 'lucide-react';
+import { useCart } from '@/lib/CartContext';
 
 interface ProductCardProps {
+  id: number;
   name: string;
   price: number;
   image: string;
@@ -11,6 +13,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({
+  id,
   name,
   price,
   image,
@@ -18,6 +21,7 @@ export const ProductCard = ({
   inStock = true,
   delay = 0,
 }: ProductCardProps) => {
+  const { addToCart } = useCart();
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -91,6 +95,7 @@ export const ProductCard = ({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               disabled={!inStock}
+              onClick={() => addToCart({ id, nom: name, prix: price, image })}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-100 group-hover/btn:opacity-0 transition-opacity" />
               <span className="absolute inset-0 bg-gradient-to-r from-secondary to-accent opacity-0 group-hover/btn:opacity-100 transition-opacity" />
