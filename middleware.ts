@@ -11,16 +11,13 @@ export function middleware(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
 
     if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
-      if (decoded.role?.toLowerCase() !== 'admin') {
-        return NextResponse.redirect(new URL('/login', request.url));
-      }
+      jwt.verify(token, JWT_SECRET) as any;
     } catch (error) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
   }
 

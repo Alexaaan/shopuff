@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
     const response = NextResponse.json({ success: true, user: { id: user.id, nom: user.nom, prenom: user.prenom, role: user.role } });
-    response.cookies.set('token', token, { httpOnly: true, path: '/', secure: process.env.NODE_ENV === 'production' });
+    response.cookies.set('token', token, { httpOnly: true, path: '/', secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
     return response;
   } catch (error) {
     console.error('Login error:', error);
