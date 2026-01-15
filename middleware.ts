@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
 
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as any;
-      if (decoded.role !== 'admin') {
+      if (decoded.role?.toLowerCase() !== 'admin') {
         return NextResponse.redirect(new URL('/login', request.url));
       }
     } catch (error) {
