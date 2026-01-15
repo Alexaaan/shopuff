@@ -86,49 +86,48 @@ export default function Orders() {
   return (
     <div className="admin-dashboard">
       <h1>Gestion des Commandes</h1>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="admin-orders-table">
         <thead>
           <tr>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>ID</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Client</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Produits</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Total</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Statut</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Paiement</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th>
+            <th>ID</th>
+            <th>Client</th>
+            <th>Produits</th>
+            <th>Total</th>
+            <th>Statut</th>
+            <th>Paiement</th>
+            <th>Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {orders.map(order => (
             <tr key={order.id}>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order.id}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>{order.id}</td>
+              <td>
                 {order.users.prenom} {order.users.nom}
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>
                 {order.order_products.map((op, index) => (
                   <div key={index}>
                     {op.quantite}x {op.products.nom} ({op.prix_unitaire}€)
                   </div>
                 ))}
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order.total}€</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{order.statut}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>{order.total}€</td>
+              <td>{order.statut}</td>
+              <td>
                 <select
                   value={order.payment_method || ''}
                   onChange={(e) => updateOrderPayment(order.id, e.target.value)}
-                  style={{ width: '100%' }}
                 >
                   <option value="espece">Espèces</option>
                   <option value="carte_bleue">Carte bleue</option>
                 </select>
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>
                 {new Date(order.debut_commande).toLocaleDateString()}
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>
                 {order.statut === 'en_attente' && (
                   <button onClick={() => updateOrderStatus(order.id, 'confirmee')}>
                     Valider

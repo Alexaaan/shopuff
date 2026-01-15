@@ -75,36 +75,35 @@ export default function ProductsAdmin() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div>
+    <div className="admin-dashboard">
       <h1>Gestion des Produits</h1>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="admin-products-table">
         <thead>
           <tr>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Image</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Nom</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Prix</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Stock</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th>
+            <th>Image</th>
+            <th>Nom</th>
+            <th>Prix</th>
+            <th>Stock</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {products.map(product => (
             <tr key={product.id}>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                <img src={product.image} alt={product.nom} style={{ width: '50px', height: '50px' }} />
+              <td>
+                <img src={product.image} alt={product.nom} />
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{product.nom}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>{product.nom}</td>
+              <td>
                 <input
                   type="number"
                   step="0.01"
                   placeholder={product.prix.toString()}
                   value={editing[product.id]?.prix || ''}
                   onChange={(e) => handleEdit(product.id, 'prix', e.target.value)}
-                  style={{ width: '80px' }}
                 />
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>
                 {product.stock}
                 <br />
                 <input
@@ -112,10 +111,9 @@ export default function ProductsAdmin() {
                   placeholder="Ajouter stock"
                   value={editing[product.id]?.stockAdd || ''}
                   onChange={(e) => handleEdit(product.id, 'stockAdd', e.target.value)}
-                  style={{ width: '80px', marginTop: '5px' }}
                 />
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td>
                 <button onClick={() => updateProduct(product.id)}>Mettre à jour</button>
               </td>
             </tr>
