@@ -8,6 +8,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/admin')) {
+    console.log("cookies:", request.cookies.getAll());
     const token = request.cookies.get('token')?.value;
 
     if (!token) {
