@@ -44,6 +44,7 @@ export const Header = ({ onCartClick, onChatClick }: HeaderProps) => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
             {user && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="w-4 h-4" />

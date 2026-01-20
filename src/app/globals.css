@@ -561,9 +561,81 @@ footer {
   border-bottom: 1px solid hsl(var(--border));
 }
 
-.chat-header h3 {
+.chat-header .back-button {
+  background: none;
+  border: none;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.chat-header .back-button:hover {
+  background: hsl(var(--muted));
+}
+
+.chat-header .chat-title {
   margin: 0;
   color: hsl(var(--foreground));
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+
+.chat-header .cancel-button {
+  background: none;
+  border: none;
+  color: hsl(var(--destructive));
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.chat-header .cancel-button:hover {
+  background: hsl(var(--destructive) / 0.1);
+}
+
+/* Page Header Styles (like Instagram) */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+  margin-bottom: 2rem;
+}
+
+.page-header .back-button {
+  background: none;
+  border: none;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.page-header .back-button:hover {
+  background: hsl(var(--muted));
+}
+
+.page-header .page-title {
+  margin: 0;
+  color: hsl(var(--foreground));
+  font-size: 1.2rem;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
 }
 
 .chat-messages {

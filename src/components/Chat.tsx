@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { Send, X } from 'lucide-react';
+import { Send, X, ChevronLeft } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
 interface Message {
@@ -140,14 +140,16 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   return (
     <div className="chat-modal">
       <div className="chat-header">
-        <h3>Chat de la commande #{orderId}</h3>
+        <button onClick={onClose} className="back-button">
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <h3 className="chat-title">Commande #{orderId}</h3>
         <div className="flex gap-2">
           {user?.id === orderUserId && (
             <button onClick={cancelOrder} className="cancel-button" title="Annuler la commande">
-              <X className="w-4 h-4" /> Annuler
+              <X className="w-4 h-4" />
             </button>
           )}
-          <button onClick={onClose}>Fermer</button>
         </div>
       </div>
       <div className="chat-messages">

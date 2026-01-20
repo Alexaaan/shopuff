@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 
 const Chat = dynamic(() => import('@/components/Chat'), { ssr: false });
 import { createClient } from '@supabase/supabase-js';
@@ -29,6 +30,7 @@ interface Order {
 
 export default function UserChats() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,16 @@ export default function UserChats() {
       fetchUserOrders();
     }
   }, [user]);
+
+  useEffect(() => {
+    const orderId = searchParams.get('orderId');
+    if (orderId && orders.length > 0) {
+      const order = orders.find(o => o.id === parseInt(orderId));
+      if (order) {
+        setSelectedOrder(order);
+      }
+    }
+  }, [searchParams, orders]);
 
   const fetchUserOrders = async () => {
     try {
@@ -66,9 +78,14 @@ export default function UserChats() {
 
   return (
     <div className="admin-chats">
-      <div className="flex items-center gap-4 mb-4">
-        <Link href="/"><button>Retour à l'accueil</button></Link>
-        <h1>Mes Conversations de Commandes</h1>
+      <div className="page-header">
+        <Link href="/">
+          <button className="back-button">
+            <span>←</span>
+          </button>
+        </Link>
+        <h1 className="page-title">Mes Conversations de Commandes</h1>
+        <div></div> {/* Spacer for centering */}
       </div>
       <div className="conversations-list">
         {orders.map(order => (

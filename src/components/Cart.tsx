@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2 } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface CartProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface CartProps {
 export const Cart = ({ isOpen, onClose }: CartProps) => {
   const { cart, updateQuantity, removeFromCart, total, clearCart } = useCart();
   const { user } = useAuth();
+  const router = useRouter();
 
   const handleOrder = async () => {
     if (cart.length === 0 || !user) return;
@@ -42,9 +44,11 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
       });
 
       if (response.ok) {
+        const data = await response.json();
         alert('Commande passée avec succès! Elle sera confirmée par l\'administrateur.');
         clearCart();
         onClose();
+        router.push(`/user/chats?orderId=${data.orderId}`);
       } else {
         alert('Erreur lors de la commande');
       }
