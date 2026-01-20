@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
@@ -28,7 +28,7 @@ interface Order {
   debut_commande: string;
 }
 
-export default function UserChats() {
+function UserChatsContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -109,5 +109,13 @@ export default function UserChats() {
         {orders.length === 0 && <p>Vous n'avez pas de commandes en cours.</p>}
       </div>
     </div>
+  );
+}
+
+export default function UserChats() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UserChatsContent />
+    </Suspense>
   );
 }
