@@ -67,6 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Register FCM token for push notifications
         if (typeof window !== 'undefined') {
+          console.log('[DEBUG] Requesting FCM token for user:', data.user.id);
           requestFCMToken(data.user.id);
         }
 

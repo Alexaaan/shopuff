@@ -6,7 +6,12 @@ export async function POST(request: NextRequest) {
     const supabase = await getSupabase();
     const { user_id, device_token, platform } = await request.json();
 
+    console.log('[DEBUG] Registering device for user:', user_id);
+    console.log('[DEBUG] Token length:', device_token?.length);
+    console.log('[DEBUG] Platform:', platform);
+
     if (!user_id || !device_token || !platform) {
+      console.error('[DEBUG] Invalid data:', { user_id, device_token_length: device_token?.length, platform });
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
@@ -22,13 +27,14 @@ export async function POST(request: NextRequest) {
       }, { onConflict: 'device_token' });
 
     if (error) {
-      console.error('Error registering device:', error);
+      console.error('[DEBUG] Database error:', error);
       return NextResponse.json({ error: 'Erreur enregistrement device' }, { status: 500 });
     }
 
+    console.log('[DEBUG] Device registered successfully for user:', user_id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error registering device:', error);
+    console.error('[DEBUG] Server error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
