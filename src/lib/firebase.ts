@@ -15,15 +15,24 @@ const app = initializeApp(firebaseConfig);
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 export const requestFCMToken = async (userId: number) => {
-  if (!messaging) return null;
+  console.log('[DEBUG] Starting FCM token request for user:', userId);
+
+  if (!messaging) {
+    console.error('[DEBUG] Messaging not available');
+    return null;
+  }
 
   try {
+    console.log('[DEBUG] Requesting notification permission...');
     const permission = await Notification.requestPermission();
+    console.log('[DEBUG] Permission result:', permission);
+
     if (permission !== 'granted') {
-      console.log('Notification permission denied');
+      console.log('[DEBUG] Notification permission denied');
       return null;
     }
 
+    console.log('[DEBUG] Getting FCM token with VAPID key...');
     const token = await getToken(messaging, {
       vapidKey: process.env.NEXT_PUBLIC_FCM_VAPID_KEY
     });
@@ -43,17 +52,22 @@ export const requestFCMToken = async (userId: number) => {
         })
       });
 
-      console.log('[DEBUG] Device registration response:', response.status);
+      console.log('[DEBUG] Device registration response:', response.status, response.statusText);
+      const responseText = await response.text();
+      console.log('[DEBUG] Response body:', responseText);
+
       if (response.ok) {
-        console.log('FCM token registered successfully');
+        console.log('[DEBUG] FCM token registered successfully for user:', userId);
       } else {
-        console.error('FCM token registration failed:', await response.text());
+        console.error('[DEBUG] FCM token registration failed for user:', userId, responseText);
       }
 
       return token;
+    } else {
+      console.log('[DEBUG] No token generated for user:', userId);
     }
   } catch (error) {
-    console.error('Error getting FCM token:', error);
+    console.error('[DEBUG] Error getting FCM token for user:', userId, error);
   }
   return null;
 };
