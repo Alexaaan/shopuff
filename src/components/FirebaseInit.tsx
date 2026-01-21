@@ -1,35 +1,40 @@
 'use client';
 
 import { useEffect } from 'react';
-import { onMessageListener } from '@/lib/firebase';
+import { onMessageListener, requestFCMToken } from '@/lib/firebase';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function FirebaseInit() {
-  useEffect(() => {
-    // Register service worker for FCM and PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/firebase-messaging-sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered:', registration);
+  const { user } = useAuth();
 
-          // Ensure service worker is ready for push notifications
-          if (registration.active) {
-            console.log('Service Worker active and ready for push notifications');
-          }
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-        });
-    }
+  useEffect(() => {
+    const initFirebase = async () => {
+      // Register service worker for FCM and PWA
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('✅ Service Worker registered:', registration);
+        } catch (error) {
+          console.error('❌ Service Worker registration failed:', error);
+        }
+      }
+
+      // Request FCM token and register device
+      if (user?.id) {
+        console.log('👤 User detected, requesting FCM token...');
+        await requestFCMToken(user.id);
+      }
+    };
+
+    initFirebase();
 
     // Listen for foreground messages
     onMessageListener()
       .then((payload: any) => {
-        console.log('Foreground message:', payload);
-        // Handle foreground notification if needed
+        console.log('💬 Foreground message received:', payload);
       })
-      .catch((err) => console.log('Failed to receive foreground message:', err));
-  }, []);
+      .catch((err) => console.log('Failed to listen for messages:', err));
+  }, [user?.id]);
 
   return null;
 }
