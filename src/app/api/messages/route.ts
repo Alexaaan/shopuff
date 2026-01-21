@@ -133,6 +133,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check cooldown: no notification for this order in last 30 seconds
+    // TEMPORARILY DISABLED FOR TESTING
+    /*
     console.log('⏰ [DEBUG] Checking cooldown for order:', order_id);
     const thirtySecondsAgo = new Date(Date.now() - 30000).toISOString();
     const { data: recentNotif } = await supabase
@@ -148,6 +150,7 @@ export async function POST(request: NextRequest) {
       // Cooldown active
       return NextResponse.json({ success: true, message: data });
     }
+    */
 
     // Create notification
     console.log('🔔 [DEBUG] Creating notification for recipient:', recipient_id);
