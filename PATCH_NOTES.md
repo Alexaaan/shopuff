@@ -52,4 +52,5 @@ This resolves the 307 redirect issue and improves the authentication flow.
 - **Architecture**: Separated client/server Supabase instances, improved data fetching.
 - **UX Enhancements**: Optimized fonts, reduced bundle size, improved TTFB.
 - **Validation**: Build successful in 5.9s, static generation for 22 pages.
+- **Hotfix**: Reverted Firebase config to hardcoded values (env vars not set in deployment).
 - **Details**: See OPTIMIZATION_REPORT.md for full breakdown.
