@@ -41,10 +41,29 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const data = event.notification.data;
-  if (data && data.order_id) {
-    // Open the chat
-    event.waitUntil(
-      clients.openWindow(`/orders/${data.order_id}/chat`)
-    );
+  let url = '/';
+
+  if (data) {
+    if (data.url) {
+      url = data.url;
+    } else if (data.order_id) {
+      url = `/orders/${data.order_id}/chat`;
+    }
   }
+
+  // Open the URL
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window/tab open with the target URL
+      for (let client of windowClients) {
+        if (client.url.includes(url) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // If not, open a new window/tab with the target URL
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    })
+  );
 });

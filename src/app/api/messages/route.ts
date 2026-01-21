@@ -202,13 +202,31 @@ export async function POST(request: NextRequest) {
               body: `Nouveau message`,
             },
             webpush: {
+              notification: {
+                title: `Commande #${order_id}`,
+                body: `Nouveau message`,
+                icon: '/logo.png',
+                badge: '/logo.png',
+                data: {
+                  order_id: order_id.toString(),
+                  type: 'chat',
+                  url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
+                },
+                actions: [
+                  {
+                    action: 'open',
+                    title: 'Ouvrir'
+                  }
+                ]
+              },
               fcmOptions: {
                 link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
               }
             },
             data: {
               order_id: order_id.toString(),
-              type: 'chat'
+              type: 'chat',
+              click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
             }
           };
 
