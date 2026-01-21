@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { Send, X, ChevronLeft } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 interface Message {
   id: number;
@@ -22,8 +22,6 @@ interface ChatProps {
   onClose: () => void;
   orderUserId?: number;
 }
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   const { user } = useAuth();

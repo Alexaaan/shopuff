@@ -1,5 +1,7 @@
 'use client';
 
+import React, { useCallback } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2 } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
@@ -11,12 +13,13 @@ interface CartProps {
   onClose: () => void;
 }
 
-export const Cart = ({ isOpen, onClose }: CartProps) => {
+export const Cart = React.memo(({ isOpen, onClose }: CartProps) => {
+  Cart.displayName = 'Cart';
   const { cart, updateQuantity, removeFromCart, total, clearCart } = useCart();
   const { user } = useAuth();
   const router = useRouter();
 
-  const handleOrder = async () => {
+  const handleOrder = useCallback(async () => {
     if (cart.length === 0 || !user) return;
 
     if (!confirm('Êtes-vous sûr de vouloir commander ?')) return;
@@ -56,7 +59,7 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
       console.error('Error placing order:', error);
       alert('Erreur lors de la commande');
     }
-  };
+  }, [cart, user, total, clearCart, onClose, router]);
 
   return (
     <AnimatePresence>
@@ -93,9 +96,11 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
                   <div className="space-y-4 mb-6">
                     {cart.map((item) => (
                       <div key={item.id} className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-muted/50 rounded-lg">
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.nom}
+                          width={64}
+                          height={64}
                           className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                         />
                         <div className="flex-1 text-center sm:text-left">
@@ -156,4 +161,4 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
         )}
       </AnimatePresence>
   );
-};
+});
