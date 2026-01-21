@@ -28,9 +28,12 @@ export const requestFCMToken = async (userId: number) => {
       vapidKey: process.env.NEXT_PUBLIC_FCM_VAPID_KEY
     });
 
+    console.log('[DEBUG] FCM token generated:', token ? 'YES' : 'NO', token?.substring(0, 20) + '...');
+
     if (token) {
       // Register with backend
-      await fetch('/api/devices/register', {
+      console.log('[DEBUG] Sending device registration for user:', userId);
+      const response = await fetch('/api/devices/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -40,7 +43,13 @@ export const requestFCMToken = async (userId: number) => {
         })
       });
 
-      console.log('FCM token registered:', token);
+      console.log('[DEBUG] Device registration response:', response.status);
+      if (response.ok) {
+        console.log('FCM token registered successfully');
+      } else {
+        console.error('FCM token registration failed:', await response.text());
+      }
+
       return token;
     }
   } catch (error) {
