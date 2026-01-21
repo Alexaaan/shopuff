@@ -10,6 +10,10 @@ interface Product {
   nom: string;
   prix: number;
   image: string;
+  description?: string;
+  stock: number;
+  average_rating: number;
+  rating_count: number;
 }
 
 export const ProductsSection = () => {
@@ -32,12 +36,12 @@ export const ProductsSection = () => {
       console.error('Error loading products:', error);
       // Fallback products for demo
       setProducts([
-        { id: 1, nom: "Chicha Galaxy Blue", prix: 29.99, image: "/IMG_1530.png" },
-        { id: 2, nom: "Chicha Nebula Red", prix: 34.99, image: "/IMG_1530.png" },
-        { id: 3, nom: "Chicha Cosmic Green", prix: 27.99, image: "/IMG_1530.png" },
-        { id: 4, nom: "Chicha Star Dust", prix: 39.99, image: "/IMG_1530.png" },
-        { id: 5, nom: "Chicha Aurora", prix: 32.99, image: "/IMG_1530.png" },
-        { id: 6, nom: "Chicha Meteor", prix: 36.99, image: "/IMG_1530.png" },
+        { id: 1, nom: "Chicha Galaxy Blue", prix: 29.99, image: "/IMG_1530.png", description: "Une chicha élégante avec un design galactique.", stock: 10, average_rating: 4.5, rating_count: 12 },
+        { id: 2, nom: "Chicha Nebula Red", prix: 34.99, image: "/IMG_1530.png", description: "Rouge intense comme une nébuleuse.", stock: 5, average_rating: 4.2, rating_count: 8 },
+        { id: 3, nom: "Chicha Cosmic Green", prix: 27.99, image: "/IMG_1530.png", description: "Vert cosmique pour une expérience unique.", stock: 15, average_rating: 4.8, rating_count: 15 },
+        { id: 4, nom: "Chicha Star Dust", prix: 39.99, image: "/IMG_1530.png", description: "Poussière d'étoiles scintillante.", stock: 3, average_rating: 4.0, rating_count: 6 },
+        { id: 5, nom: "Chicha Aurora", prix: 32.99, image: "/IMG_1530.png", description: "Comme une aurore boréale.", stock: 8, average_rating: 4.6, rating_count: 10 },
+        { id: 6, nom: "Chicha Meteor", prix: 36.99, image: "/IMG_1530.png", description: "Design météorique impressionnant.", stock: 0, average_rating: 4.3, rating_count: 9 },
       ]);
     } finally {
       setLoading(false);
@@ -82,8 +86,8 @@ export const ProductsSection = () => {
                 name={product.nom}
                 price={product.prix}
                 image={product.image}
-                rating={5}
-                inStock={true}
+                rating={product.average_rating}
+                inStock={product.stock > 0}
                 delay={index * 0.1}
               />
             ))

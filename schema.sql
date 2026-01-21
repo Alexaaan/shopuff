@@ -29,7 +29,19 @@ CREATE TABLE products (
     description TEXT,
     stock INT NOT NULL DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
+    average_rating DECIMAL(3,2) DEFAULT 0,
+    rating_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_ratings (
+    id SERIAL PRIMARY KEY,
+    product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(product_id, user_id)
 );
 
 -- =====================

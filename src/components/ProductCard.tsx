@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ShoppingBag, Star } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
+import { useRouter } from 'next/navigation';
 
 interface ProductCardProps {
   id: number;
@@ -22,6 +23,7 @@ export const ProductCard = ({
   delay = 0,
 }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const router = useRouter();
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -35,7 +37,10 @@ export const ProductCard = ({
       <div className="absolute -inset-1 bg-gradient-to-r from-primary via-secondary to-accent rounded-2xl opacity-0 group-hover:opacity-50 blur-xl transition-all duration-500" />
 
       {/* Card */}
-      <div className="relative glass-card overflow-hidden">
+      <div
+        className="relative glass-card overflow-hidden cursor-pointer"
+        onClick={() => router.push(`/product/${id}`)}
+      >
         {/* Image Container */}
         <div className="relative h-40 sm:h-48 md:h-56 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent z-10" />
@@ -95,7 +100,10 @@ export const ProductCard = ({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               disabled={!inStock}
-              onClick={() => addToCart({ id, nom: name, prix: price, image })}
+              onClick={(e) => {
+                e.stopPropagation();
+                addToCart({ id, nom: name, prix: price, image });
+              }}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-100 group-hover/btn:opacity-0 transition-opacity" />
               <span className="absolute inset-0 bg-gradient-to-r from-secondary to-accent opacity-0 group-hover/btn:opacity-100 transition-opacity" />

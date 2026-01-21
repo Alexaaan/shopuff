@@ -6,7 +6,7 @@ export async function GET() {
     const supabase = await getSupabase();
     const { data: products, error } = await supabase
       .from('products')
-      .select('id, nom, prix, image, stock')
+      .select('id, nom, prix, image, description, stock, average_rating, rating_count')
       .eq('is_active', true);
 
     if (error) {
