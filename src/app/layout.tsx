@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import FirebaseInit from "@/components/FirebaseInit";
 
 export const metadata: Metadata = {
   title: "shopuff",
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <CartProvider>
+            <FirebaseInit />
             {children}
           </CartProvider>
         </AuthProvider>

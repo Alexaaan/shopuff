@@ -20,6 +20,9 @@ export default function Dashboard() {
         <Link href="/admin/dashboard/stats" className="keypad-btn">
           📊<br />Statistiques
         </Link>
+        <Link href="/admin/dashboard/notifications" className="keypad-btn">
+          🔔<br />Notifications
+        </Link>
       </div>
     </div>
   );

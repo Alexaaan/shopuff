@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { requestFCMToken } from './firebase';
 
 interface User {
   id: number;
@@ -63,6 +64,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+
+        // Register FCM token for push notifications
+        if (typeof window !== 'undefined') {
+          requestFCMToken(data.user.id);
+        }
+
         return true;
       }
       return false;

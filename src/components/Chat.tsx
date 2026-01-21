@@ -36,6 +36,13 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
     fetchMessages();
     requestNotificationPermission();
 
+    // Set presence active
+    fetch('/api/chat/presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: user?.id, order_id: orderId, is_active: true })
+    }).catch(() => {});
+
     // Subscribe to real-time updates
     const channel = supabase
       .channel(`messages:${orderId}`)
@@ -48,7 +55,7 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
         const newMsg = payload.new as Message;
         setMessages(prev => [...prev, newMsg]);
 
-        // Show notification if from other user and document is hidden
+        // Show notification if from other user and document is hidden (for web)
         if (newMsg.users && newMsg.users.id !== user?.id) {
           if (document.hidden && Notification.permission === 'granted') {
             new Notification(`Nouveau message de ${newMsg.users.prenom} ${newMsg.users.nom}`, {
@@ -67,6 +74,12 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
 
     return () => {
       supabase.removeChannel(channel);
+      // Set presence inactive
+      fetch('/api/chat/presence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user?.id, order_id: orderId, is_active: false })
+      }).catch(() => {});
     };
   }, [orderId, user?.id]);
 
@@ -99,7 +112,8 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
         body: JSON.stringify({
           order_id: orderId,
           user_id: user.id,
-          message: newMessage.trim()
+          message: newMessage.trim(),
+          is_chat_open: true
         })
       });
 
