@@ -69,15 +69,15 @@ export default function PWAInstallBanner() {
       <div className="pwa-banner-content">
         <div className="pwa-banner-icon">📱</div>
         <div className="pwa-banner-text">
-          <h4>Installez l'application</h4>
-          <p>Recevez les notifications push et profitez d'une meilleure expérience !</p>
+          <h4>Installez Shopuff</h4>
+          <p>Recevez les notifications push des messages et commandes en temps réel !</p>
         </div>
         <div className="pwa-banner-actions">
           <button onClick={handleInstall} className="pwa-install-btn">
-            Installer
+            Installer l'app
           </button>
           <button onClick={handleDismiss} className="pwa-dismiss-btn">
-            ✕
+            Plus tard
           </button>
         </div>
       </div>

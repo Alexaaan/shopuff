@@ -1,23 +1,36 @@
 {
-    "name": "shopuff",
-    "short_name": "shopuff",
-    "description": "Découvrez notre sélection de chichas avec stock en temps réel",
+    "name": "Shopuff - Chichas & Accessoires",
+    "short_name": "Shopuff",
+    "description": "Découvrez notre sélection de chichas avec stock en temps réel et chat intégré",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#f4f4f4",
-    "theme_color": "#4CAF50",
+    "background_color": "#ffffff",
+    "theme_color": "#8B5CF6",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "fr",
+    "categories": ["shopping", "lifestyle"],
     "icons": [
         {
-            "src": "logo.png",
+            "src": "/logo.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "logo.png",
+            "src": "/logo.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Mes commandes",
+            "short_name": "Commandes",
+            "description": "Voir mes commandes en cours",
+            "url": "/user/chats",
+            "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
         }
     ]
 }

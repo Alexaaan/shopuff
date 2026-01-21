@@ -86,8 +86,9 @@ CREATE POLICY "Admin can manage notifications" ON notifications FOR ALL USING (a
 -- Policies for notification_targets (admin only)
 CREATE POLICY "Admin can manage targets" ON notification_targets FOR ALL USING (auth.jwt() ->> 'role' = 'admin');
 
--- Policies for notification_logs (admin only)
-CREATE POLICY "Admin can view logs" ON notification_logs FOR ALL USING (auth.jwt() ->> 'role' = 'admin');
+-- Policies for notification_logs (allow inserts for logging)
+CREATE POLICY "Allow inserts for logging" ON notification_logs FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admin can view logs" ON notification_logs FOR SELECT USING (auth.jwt() ->> 'role' = 'admin');
 
 -- Policies for chat_presence (users can manage their own)
 CREATE POLICY "Users can manage own presence" ON chat_presence FOR ALL USING (auth.uid()::text = user_id::text);
