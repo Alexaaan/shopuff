@@ -3,6 +3,7 @@ import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import FirebaseInit from "@/components/FirebaseInit";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 
 export const metadata: Metadata = {
   title: "shopuff",
@@ -43,6 +44,7 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <FirebaseInit />
+            <PWAInstallBanner />
             {children}
           </CartProvider>
         </AuthProvider>
