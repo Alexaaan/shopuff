@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if recipient is active in chat
+    console.log('👀 [DEBUG] Checking presence for recipient:', recipient_id, 'order:', order_id);
     const { data: presence } = await supabase
       .from('chat_presence')
       .select('id')
@@ -124,12 +125,15 @@ export async function POST(request: NextRequest) {
       .eq('is_active', true)
       .single();
 
+    console.log('👀 [DEBUG] Presence found:', !!presence);
     if (presence) {
+      console.log('🚫 [DEBUG] User active in chat, skipping notification');
       // User is active, no notification
       return NextResponse.json({ success: true, message: data });
     }
 
     // Check cooldown: no notification for this order in last 30 seconds
+    console.log('⏰ [DEBUG] Checking cooldown for order:', order_id);
     const thirtySecondsAgo = new Date(Date.now() - 30000).toISOString();
     const { data: recentNotif } = await supabase
       .from('notifications')
@@ -138,12 +142,15 @@ export async function POST(request: NextRequest) {
       .gte('created_at', thirtySecondsAgo)
       .limit(1);
 
+    console.log('⏰ [DEBUG] Recent notifications found:', recentNotif?.length || 0);
     if (recentNotif && recentNotif.length > 0) {
+      console.log('🚫 [DEBUG] Cooldown active, skipping notification');
       // Cooldown active
       return NextResponse.json({ success: true, message: data });
     }
 
     // Create notification
+    console.log('🔔 [DEBUG] Creating notification for recipient:', recipient_id);
     const { data: notif, error: notifError } = await supabase
       .from('notifications')
       .insert({
