@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin (only once)
+if (!admin.apps.length) {
+  const serviceAccount = {
+    type: "service_account",
+    project_id: "shopu-d287a",
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://oauth2.googleapis.com/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
+  };
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -159,33 +180,29 @@ export async function POST(request: NextRequest) {
       .eq('is_active', true);
 
     if (devices && devices.length > 0) {
-      // Send to FCM
+      // Send to FCM using Firebase Admin
       for (const device of devices) {
         try {
-          const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
-            method: 'POST',
-            headers: {
-              'Authorization': `key=${process.env.FCM_SERVER_KEY}`,
-              'Content-Type': 'application/json'
+          const message = {
+            token: device.device_token,
+            notification: {
+              title: `Commande #${order_id}`,
+              body: `Nouveau message`,
             },
-            body: JSON.stringify({
-              to: device.device_token,
-              notification: {
-                title: `Commande #${order_id}`,
-                body: `Nouveau message`,
-                click_action: `/orders/${order_id}/chat`
-              },
-              data: {
-                order_id: order_id.toString(),
-                type: 'chat'
+            webpush: {
+              fcmOptions: {
+                link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
               }
-            })
-          });
+            },
+            data: {
+              order_id: order_id.toString(),
+              type: 'chat'
+            }
+          };
 
-          const logStatus = fcmResponse.ok ? 'sent' : 'failed';
-          const errorMsg = fcmResponse.ok ? null : await fcmResponse.text();
+          const response = await admin.messaging().send(message);
 
-          // Log
+          // Log success
           await supabase
             .from('notification_logs')
             .insert({
@@ -193,10 +210,11 @@ export async function POST(request: NextRequest) {
               user_id: recipient_id,
               device_token: device.device_token,
               platform: device.platform,
-              status: logStatus,
-              error_message: errorMsg
+              status: 'sent'
             });
-        } catch (fcmError) {
+
+          console.log('FCM sent successfully:', response);
+        } catch (fcmError: any) {
           console.error('FCM error:', fcmError);
           await supabase
             .from('notification_logs')
@@ -206,7 +224,7 @@ export async function POST(request: NextRequest) {
               device_token: device.device_token,
               platform: device.platform,
               status: 'failed',
-              error_message: fcmError instanceof Error ? fcmError.message : 'Unknown FCM error'
+              error_message: fcmError.message || 'FCM send failed'
             });
         }
       }
