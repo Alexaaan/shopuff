@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2 } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
@@ -96,11 +95,9 @@ export const Cart = React.memo(({ isOpen, onClose }: CartProps) => {
                   <div className="space-y-4 mb-6">
                     {cart.map((item) => (
                       <div key={item.id} className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-muted/50 rounded-lg">
-                        <Image
+                        <img
                           src={item.image}
                           alt={item.nom}
-                          width={64}
-                          height={64}
                           className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                         />
                         <div className="flex-1 text-center sm:text-left">

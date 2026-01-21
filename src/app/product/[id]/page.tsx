@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, Star, MessageCircle, Heart } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
-import Image from 'next/image';
 
 interface Product {
   id: number;
@@ -153,12 +152,10 @@ export default function ProductPage() {
             className="space-y-4"
           >
             <div className="relative aspect-square rounded-2xl overflow-hidden glass-card">
-              <Image
+              <img
                 src={product.image}
                 alt={product.nom}
-                fill
-                className="object-cover"
-                priority
+                className="w-full h-full object-cover"
               />
             </div>
           </motion.div>
