@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin (only once)
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: "shopu-d287a",
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    }),
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -172,36 +184,31 @@ export async function POST(request: NextRequest) {
 
     if (devices && devices.length > 0) {
       console.log('🚀 [DEBUG] Sending FCM to', devices.length, 'devices');
-      // Send to FCM using legacy API
+      // Send to FCM using Firebase Admin
       for (const device of devices) {
         try {
           console.log('📤 [DEBUG] Sending to device:', device.platform, device.device_token.substring(0, 20) + '...');
-          const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
-            method: 'POST',
-            headers: {
-              'Authorization': `key=${process.env.FCM_SERVER_KEY}`,
-              'Content-Type': 'application/json'
+          const message = {
+            token: device.device_token,
+            notification: {
+              title: `Commande #${order_id}`,
+              body: `Nouveau message`,
             },
-            body: JSON.stringify({
-              to: device.device_token,
-              notification: {
-                title: `Commande #${order_id}`,
-                body: `Nouveau message`,
-                click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
-              },
-              data: {
-                order_id: order_id.toString(),
-                type: 'chat'
+            webpush: {
+              fcmOptions: {
+                link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
               }
-            })
-          });
+            },
+            data: {
+              order_id: order_id.toString(),
+              type: 'chat'
+            }
+          };
 
-          const logStatus = fcmResponse.ok ? 'sent' : 'failed';
-          const errorMsg = fcmResponse.ok ? null : await fcmResponse.text();
+          const response = await admin.messaging().send(message);
+          console.log('✅ [DEBUG] FCM sent successfully:', response);
 
-          console.log('📤 [DEBUG] FCM response status:', fcmResponse.status, logStatus);
-
-          // Log
+          // Log success
           await supabase
             .from('notification_logs')
             .insert({
@@ -209,16 +216,10 @@ export async function POST(request: NextRequest) {
               user_id: recipient_id,
               device_token: device.device_token,
               platform: device.platform,
-              status: logStatus,
-              error_message: errorMsg
+              status: 'sent'
             });
 
-          if (fcmResponse.ok) {
-            console.log('✅ [DEBUG] FCM sent successfully');
-          } else {
-            console.error('❌ [DEBUG] FCM failed:', errorMsg);
-          }
-        } catch (fcmError) {
+        } catch (fcmError: any) {
           console.error('❌ [DEBUG] FCM error:', fcmError);
           await supabase
             .from('notification_logs')
@@ -228,7 +229,7 @@ export async function POST(request: NextRequest) {
               device_token: device.device_token,
               platform: device.platform,
               status: 'failed',
-              error_message: fcmError instanceof Error ? fcmError.message : 'Unknown FCM error'
+              error_message: fcmError.message || 'FCM send failed'
             });
         }
       }
