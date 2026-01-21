@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         title: 'Nouveau message',
         message: message.length > 100 ? message.substring(0, 100) + '...' : message,
         type: 'info',
-        action_url: `/orders/${order_id}/chat`,
+        action_url: `/user/chats?orderId=${order_id}`,
         status: 'sent',
         sent_at: new Date().toISOString(),
         created_by: user_id // or admin id, but for now user_id
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
                 data: {
                   order_id: order_id.toString(),
                   type: 'chat',
-                  url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
+                  url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
                 },
                 actions: [
                   {
@@ -223,13 +223,13 @@ export async function POST(request: NextRequest) {
                 ]
               },
               fcmOptions: {
-                link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
+                link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
               }
             },
             data: {
               order_id: order_id.toString(),
               type: 'chat',
-              click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/orders/${order_id}/chat`
+              click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
             }
           };
 
