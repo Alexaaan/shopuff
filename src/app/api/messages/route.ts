@@ -179,7 +179,6 @@ export async function POST(request: NextRequest) {
             notification: {
               title: `Commande #${order_id}`,
               body: `Nouveau message`,
-              icon: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/logo.png`,
             },
             webpush: {
               fcmOptions: {
