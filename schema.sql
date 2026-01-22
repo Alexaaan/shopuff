@@ -45,6 +45,24 @@ CREATE TABLE product_ratings (
 );
 
 -- =====================
+-- TABLE OFFLINE_PRODUCTS
+-- =====================
+CREATE TABLE offline_products (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(150) NOT NULL,
+    image VARCHAR(255),
+    prix DECIMAL(10,2) NOT NULL,
+    description TEXT,
+    stock INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    average_rating DECIMAL(3,2) DEFAULT 0,
+    rating_count INT DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    created_by INT REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================
 -- TABLE PACKS
 -- =====================
 CREATE TABLE packs (
