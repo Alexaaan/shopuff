@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Lock, Sparkles } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
-export const LoginScreen = () => {
+export const LoginScreen = ({ onSwitchToRegister }: { onSwitchToRegister?: () => void }) => {
   const { login } = useAuth();
   const [secretCode, setSecretCode] = useState('');
   const [error, setError] = useState('');
@@ -89,7 +89,21 @@ export const LoginScreen = () => {
           </motion.button>
         </form>
 
-        <div className="mt-8 text-center">
+        {onSwitchToRegister && (
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Pas encore de compte ?{' '}
+              <button
+                onClick={onSwitchToRegister}
+                className="text-primary hover:underline font-medium"
+              >
+                S'inscrire
+              </button>
+            </p>
+          </div>
+        )}
+
+        <div className="mt-4 text-center">
           <p className="text-xs text-muted-foreground">
             Contactez l'administrateur pour obtenir votre code secret
           </p>
