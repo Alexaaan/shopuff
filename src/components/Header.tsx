@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ShoppingCart, User, LogOut, MessageCircle, Shield } from 'lucide-react';
+import { ShoppingCart, User, LogOut, MessageCircle, Shield, Bell, BellOff, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -14,7 +14,7 @@ interface HeaderProps {
 
 export const Header = ({ onCartClick, onChatClick }: HeaderProps) => {
   const { cart } = useCart();
-  const { user, logout } = useAuth();
+  const { user, logout, notificationStatus } = useAuth();
   const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
   const router = useRouter();
 
@@ -46,9 +46,29 @@ export const Header = ({ onCartClick, onChatClick }: HeaderProps) => {
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
             {user && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="w-4 h-4" />
-                <span>{user.prenom} {user.nom}</span>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  <span>{user.prenom} {user.nom}</span>
+                </div>
+
+                {/* Notification Status Indicator */}
+                {notificationStatus !== 'none' && (
+                  <div className="flex items-center gap-1" title={`Notifications: ${notificationStatus}`}>
+                    {notificationStatus === 'registered' && (
+                      <Bell className="w-4 h-4 text-green-500" />
+                    )}
+                    {notificationStatus === 'requesting' && (
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    )}
+                    {notificationStatus === 'denied' && (
+                      <BellOff className="w-4 h-4 text-red-500" />
+                    )}
+                    {notificationStatus === 'error' && (
+                      <AlertCircle className="w-4 h-4 text-orange-500" />
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
