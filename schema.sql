@@ -176,13 +176,50 @@ CREATE TABLE messages (
 );
 
 -- =====================
+-- TABLE NOTIFICATION_LOGS
+-- =====================
+CREATE TABLE notification_logs (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(20) CHECK (type IN ('info', 'warning', 'promo', 'system', 'order', 'message')) DEFAULT 'info',
+    target_type VARCHAR(20) CHECK (target_type IN ('all', 'role', 'user')) DEFAULT 'all',
+    target_value VARCHAR(100),
+    sent_by INT REFERENCES users(id),
+    devices_targeted INT DEFAULT 0,
+    devices_success INT DEFAULT 0,
+    devices_failed INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_notification_logs_sender FOREIGN KEY (sent_by) REFERENCES users(id)
+);
+
+-- =====================
+-- TABLE NOTIFICATION_SETTINGS
+-- =====================
+CREATE TABLE notification_settings (
+    id SERIAL PRIMARY KEY,
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value TEXT,
+    description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insertion des paramètres par défaut
+INSERT INTO notification_settings (setting_key, setting_value, description) VALUES
+('sound_enabled', 'true', 'Activer les sons de notification'),
+('vibration_enabled', 'true', 'Activer les vibrations sur mobile'),
+('auto_order_notifications', 'true', 'Notifications automatiques pour nouvelles commandes'),
+('auto_message_notifications', 'true', 'Notifications automatiques pour messages de commande');
+
+-- =====================
 -- TABLE LOGS (actions admin)
 -- =====================
 CREATE TABLE logs (
     id SERIAL PRIMARY KEY,
     admin_id INT NOT NULL,
     action VARCHAR(255) NOT NULL,
-    cible_type VARCHAR(20) CHECK (cible_type IN ('user', 'order', 'product', 'pack', 'promotion')),
+    cible_type VARCHAR(20) CHECK (cible_type IN ('user', 'order', 'product', 'pack', 'promotion', 'notification')),
     cible_id INT,
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
