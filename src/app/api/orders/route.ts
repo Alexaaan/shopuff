@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import admin from 'firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,6 +44,84 @@ export async function POST(request: NextRequest) {
     if (productsError) {
       console.error('Error creating order products:', productsError);
       return NextResponse.json({ error: 'Erreur produits commande' }, { status: 500 });
+    }
+
+    // Envoyer une notification push à tous les admins
+    try {
+      // Récupérer les noms des produits pour la notification
+      const productIds = order_products.map((op: any) => op.product_id);
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('id, nom')
+        .in('id', productIds);
+
+      if (productsError) {
+        console.error('Error fetching product names:', productsError);
+      }
+
+      // Créer un mapping id -> nom
+      const productNames: { [key: number]: string } = {};
+      products?.forEach((product: any) => {
+        productNames[product.id] = product.nom;
+      });
+
+      // Récupérer les devices de tous les admins
+      const { data: adminDevices, error: devicesError } = await supabase
+        .from('user_devices')
+        .select('device_token, platform')
+        .eq('is_active', true)
+        .in('user_id',
+          (await supabase
+            .from('users')
+            .select('id')
+            .eq('role', 'admin')
+            .eq('is_active', true)
+          ).data?.map((admin: any) => admin.id) || []
+        );
+
+      if (!devicesError && adminDevices && adminDevices.length > 0) {
+        // Initialiser Firebase Admin si pas déjà fait
+        if (!admin.apps.length) {
+          const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+          });
+        }
+
+        // Créer le message de notification
+        const orderProducts = order_products.map((op: any) => {
+          const productName = productNames[op.product_id] || 'produit';
+          return `${op.quantite}x ${productName}`;
+        }).join(', ');
+
+        const message = {
+          notification: {
+            title: '🛒 Nouvelle commande !',
+            body: `Commande #${order.id} - ${orderProducts}`,
+          },
+          data: {
+            type: 'new_order',
+            orderId: order.id.toString(),
+            total: total.toString(),
+          },
+        };
+
+        // Envoyer à tous les devices des admins
+        const sendPromises = adminDevices.map((device: any) =>
+          admin.messaging().send({
+            ...message,
+            token: device.device_token,
+          }).catch((err: any) => {
+            console.error('Error sending notification to admin device:', device.device_token, err);
+          })
+        );
+
+        await Promise.all(sendPromises);
+        console.log(`Order notification sent to ${adminDevices.length} admin device(s) for order ${order.id}`);
+      }
+    } catch (notificationError) {
+      console.error('Error sending order notification to admins:', notificationError);
+      // Ne pas échouer la commande pour autant
     }
 
     return NextResponse.json({ success: true, orderId: order.id });
