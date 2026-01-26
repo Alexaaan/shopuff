@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Clock, UserPlus, Users, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, UserPlus, Users } from 'lucide-react';
 
 interface User {
   id: number;
@@ -17,7 +17,13 @@ interface User {
 export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'inactive'>('all');
+  const [form, setForm] = useState({
+    nom: '',
+    prenom: '',
+    telephone: '',
+    secret_code: '',
+    role: 'user'
+  });
 
   useEffect(() => {
     loadUsers();
@@ -34,6 +40,27 @@ export default function AdminUsers() {
       console.error('Error loading users:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function createUser(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+
+      if (response.ok) {
+        setForm({ nom: '', prenom: '', telephone: '', secret_code: '', role: 'user' });
+        loadUsers();
+      } else {
+        alert('Erreur lors de la création');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      alert('Erreur serveur');
     }
   }
 
@@ -60,22 +87,8 @@ export default function AdminUsers() {
 
 
 
-  const filteredUsers = users.filter(user => {
-    switch (filter) {
-      case 'pending':
-        return !user.is_active;
-      case 'active':
-        return user.is_active && user.role === 'user';
-      case 'inactive':
-        return !user.is_active;
-      default:
-        return true;
-    }
-  });
-
   const stats = {
     total: users.length,
-    pending: users.filter(u => !u.is_active).length,
     active: users.filter(u => u.is_active && u.role === 'user').length,
     admins: users.filter(u => u.role === 'admin').length
   };
@@ -98,12 +111,93 @@ export default function AdminUsers() {
             Gestion des Utilisateurs
           </h1>
           <p className="text-muted-foreground">
-            Approuvez ou rejetez les demandes d'inscription
+            Créez et gérez les comptes utilisateurs
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {/* Create User Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-6 mb-8"
+        >
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <UserPlus className="w-5 h-5" />
+            Créer un nouvel utilisateur
+          </h2>
+
+          <form onSubmit={createUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Prénom</label>
+              <input
+                type="text"
+                value={form.prenom}
+                onChange={(e) => setForm({ ...form, prenom: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border focus:border-primary focus:outline-none transition-colors"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Nom</label>
+              <input
+                type="text"
+                value={form.nom}
+                onChange={(e) => setForm({ ...form, nom: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border focus:border-primary focus:outline-none transition-colors"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Téléphone</label>
+              <input
+                type="tel"
+                value={form.telephone}
+                onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border focus:border-primary focus:outline-none transition-colors"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Code secret</label>
+              <input
+                type="password"
+                value={form.secret_code}
+                onChange={(e) => setForm({ ...form, secret_code: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border focus:border-primary focus:outline-none transition-colors"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Rôle</label>
+              <select
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border focus:border-primary focus:outline-none transition-colors"
+              >
+                <option value="user">Utilisateur</option>
+                <option value="admin">Administrateur</option>
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground py-2 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+              >
+                Créer l'utilisateur
+              </motion.button>
+            </div>
+          </form>
+        </motion.div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -113,7 +207,7 @@ export default function AdminUsers() {
               <Users className="w-8 h-8 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-sm text-muted-foreground">Utilisateurs</p>
               </div>
             </div>
           </motion.div>
@@ -122,21 +216,6 @@ export default function AdminUsers() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="glass-card p-6"
-          >
-            <div className="flex items-center gap-3">
-              <Clock className="w-8 h-8 text-yellow-500" />
-              <div>
-                <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-sm text-muted-foreground">En attente</p>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
             className="glass-card p-6"
           >
             <div className="flex items-center gap-3">
@@ -151,7 +230,7 @@ export default function AdminUsers() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.2 }}
             className="glass-card p-6"
           >
             <div className="flex items-center gap-3">
@@ -164,110 +243,89 @@ export default function AdminUsers() {
           </motion.div>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 mb-6">
-          {[
-            { key: 'all', label: 'Tous', count: stats.total },
-            { key: 'pending', label: 'En attente', count: stats.pending },
-            { key: 'active', label: 'Actifs', count: stats.active },
-            { key: 'inactive', label: 'Inactifs', count: users.filter(u => !u.is_active).length }
-          ].map(({ key, label, count }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted hover:bg-muted/80'
-              }`}
-            >
-              {label} ({count})
-            </button>
-          ))}
-        </div>
-
         {/* Users List */}
-        <div className="space-y-4">
-          {filteredUsers.map((user, index) => (
-            <motion.div
-              key={user.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="glass-card p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <span className="font-semibold text-lg">
-                      {user.prenom[0]}{user.nom[0]}
-                    </span>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card"
+        >
+          <div className="p-6 border-b border-border">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Utilisateurs ({users.length})
+            </h2>
+          </div>
+
+          <div className="divide-y divide-border">
+            {users.map((user, index) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.02 }}
+                className="p-4 hover:bg-muted/20 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="font-semibold text-sm">
+                        {user.prenom[0]}{user.nom[0]}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-medium">
+                        {user.prenom} {user.nom}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{user.telephone}</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold text-lg">
-                      {user.prenom} {user.nom}
-                    </h3>
-                    <p className="text-muted-foreground">{user.telephone}</p>
-                    <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         user.role === 'admin'
                           ? 'bg-purple-100 text-purple-800'
                           : user.is_active
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
                       }`}>
-                        {user.role === 'admin' ? 'Admin' : user.is_active ? 'Actif' : 'En attente'}
+                        {user.role === 'admin' ? 'Admin' : user.is_active ? 'Actif' : 'Inactif'}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {new Date(user.created_at).toLocaleDateString()}
                       </span>
                     </div>
+
+                    {user.role !== 'admin' && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => updateUserStatus(user.id, !user.is_active)}
+                        className={`px-3 py-1 text-white rounded text-sm font-medium transition-colors ${
+                          user.is_active
+                            ? 'bg-red-500 hover:bg-red-600'
+                            : 'bg-green-500 hover:bg-green-600'
+                        }`}
+                      >
+                        {user.is_active ? 'Désactiver' : 'Activer'}
+                      </motion.button>
+                    )}
                   </div>
                 </div>
+              </motion.div>
+            ))}
 
-                <div className="flex gap-2">
-                  {user.role !== 'admin' && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => updateUserStatus(user.id, !user.is_active)}
-                      className={`px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${
-                        user.is_active
-                          ? 'bg-red-500 hover:bg-red-600'
-                          : 'bg-green-500 hover:bg-green-600'
-                      }`}
-                    >
-                      {user.is_active ? (
-                        <>
-                          <XCircle className="w-4 h-4" />
-                          Désactiver
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4" />
-                          Activer
-                        </>
-                      )}
-                    </motion.button>
-                  )}
-                </div>
+            {users.length === 0 && (
+              <div className="p-12 text-center">
+                <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Aucun utilisateur créé pour le moment
+                </p>
               </div>
-            </motion.div>
-          ))}
-
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-12">
-              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {filter === 'pending'
-                  ? 'Aucun utilisateur en attente d\'approbation'
-                  : 'Aucun utilisateur trouvé'
-                }
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );
