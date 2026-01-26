@@ -13,16 +13,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (secretCode: string) => Promise<boolean>;
-  register: (data: RegisterData) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
-}
-
-interface RegisterData {
-  nom: string;
-  prenom: string;
-  telephone: string;
-  secretCode: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,6 +69,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (typeof window !== 'undefined') {
           console.log('[DEBUG] Requesting FCM token for user:', data.user.id);
           requestFCMToken(data.user.id);
+
+          // Envoyer une notification de bienvenue si c'est la première connexion
+          if (data.user.is_active) {
+            // TODO: Envoyer notification de bienvenue
+            console.log('User logged in successfully - welcome notification could be sent');
+          }
         }
 
         return true;
@@ -88,32 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (data: RegisterData): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-
-        // Register FCM token for push notifications
-        if (typeof window !== 'undefined') {
-          console.log('[DEBUG] Requesting FCM token for new user:', data.user.id);
-          requestFCMToken(data.user.id);
-        }
-
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Registration failed:', error);
-      return false;
-    }
-  };
 
   const logout = () => {
     setUser(null);
@@ -124,7 +97,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     <AuthContext.Provider value={{
       user,
       login,
-      register,
       logout,
       isLoading
     }}>

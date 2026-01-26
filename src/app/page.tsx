@@ -7,13 +7,11 @@ import { ProductsSection } from '@/components/ProductsSection';
 import { Cart } from '@/components/Cart';
 import { Header } from '@/components/Header';
 import { LoginScreen } from '@/components/LoginScreen';
-import { RegisterScreen } from '@/components/RegisterScreen';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Home() {
   const { user, isLoading } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [showLogin, setShowLogin] = useState(true);
   const router = useRouter();
 
   if (isLoading) {
@@ -25,11 +23,7 @@ export default function Home() {
   }
 
   if (!user) {
-    return showLogin ? (
-      <LoginScreen onSwitchToRegister={() => setShowLogin(false)} />
-    ) : (
-      <RegisterScreen onSwitchToLogin={() => setShowLogin(true)} />
-    );
+    return <LoginScreen />;
   }
 
   const handleChatClick = () => {

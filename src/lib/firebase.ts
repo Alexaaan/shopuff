@@ -17,6 +17,12 @@ export const messaging = typeof window !== 'undefined' ? getMessaging(app) : nul
 export const requestFCMToken = async (userId: number) => {
   console.log('[DEBUG] Starting FCM token request for user:', userId);
 
+  // Vérifier que l'userId est valide
+  if (!userId || userId <= 0) {
+    console.log('[DEBUG] Invalid userId, skipping FCM token request');
+    return null;
+  }
+
   if (!messaging) {
     console.error('[DEBUG] Messaging not available');
     return null;
