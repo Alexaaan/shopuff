@@ -26,6 +26,27 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = (page - 1) * limit;
 
+    console.log('🔍 Fetching delivery logs from notification_logs table...');
+
+    // D'abord, testons une requête simple pour voir si la table est accessible
+    const { data: testData, error: testError } = await supabase
+      .from('notification_logs')
+      .select('id')
+      .limit(1);
+
+    if (testError) {
+      console.error('❌ Table notification_logs not accessible:', testError);
+      return NextResponse.json({
+        error: 'Table notification_logs inaccessible',
+        details: testError.message,
+        logs: [],
+        stats: { total: 0, sent: 0, failed: 0, opened: 0, pending: 0 },
+        pagination: { page: 1, limit: 50, total: 0, totalPages: 0 }
+      });
+    }
+
+    console.log('✅ Table accessible, fetching delivery logs...');
+
     // Récupérer les logs détaillés de livraison des notifications
     const { data: deliveryLogs, error, count } = await supabase
       .from('notification_logs')
@@ -38,19 +59,23 @@ export async function GET(request: NextRequest) {
         status,
         error_message,
         sent_at,
-        opened_at,
-        users!notification_logs_user_id_fkey (
-          name,
-          email
-        )
+        opened_at
       `, { count: 'exact' })
       .order('sent_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) {
-      console.error('Error fetching delivery logs:', error);
-      return NextResponse.json({ error: 'Erreur récupération logs livraison' }, { status: 500 });
+      console.error('❌ Error fetching delivery logs:', error);
+      return NextResponse.json({
+        error: 'Erreur récupération logs livraison',
+        details: error.message,
+        logs: [],
+        stats: { total: 0, sent: 0, failed: 0, opened: 0, pending: 0 },
+        pagination: { page: 1, limit: 50, total: 0, totalPages: 0 }
+      });
     }
+
+    console.log(`✅ Found ${deliveryLogs?.length || 0} delivery logs`);
 
     // Statistiques de livraison
     const stats = {
