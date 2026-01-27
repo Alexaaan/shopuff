@@ -30,19 +30,13 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', '@supabase/supabase-js'],
   },
 
+  // Configuration Turbopack
+  turbopack: {},
+
   // Compression et optimisation
   compress: true,
   poweredByHeader: false,
 
-  // Optimisation du bundle
-  modularizeImports: {
-    'lucide-react': {
-      transform: 'lucide-react/{{member}}',
-    },
-    '@supabase/supabase-js': {
-      transform: '@supabase/supabase-js/{{member}}',
-    },
-  },
 
   // Headers de sécurité et performance
   async headers() {
