@@ -15,26 +15,93 @@ firebase.initializeApp(firebaseConfig);
 
 const messaging = firebase.messaging();
 
+// Store for notification deduplication
+const shownNotifications = new Set();
+const NOTIFICATION_EXPIRY = 30000; // 30 seconds
+
+// Clean up old notifications periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, timestamp] of shownNotifications.entries()) {
+    if (now - timestamp > NOTIFICATION_EXPIRY) {
+      shownNotifications.delete(id);
+    }
+  }
+}, 10000); // Clean every 10 seconds
+
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log('Received background message:', payload);
 
-  const notificationTitle = payload.notification?.title || 'Notification';
+  // Create unique notification ID for deduplication
+  const notificationId = payload.data?.messageId || `${payload.data?.type || 'unknown'}-${Date.now()}`;
+
+  // Check if notification was already shown recently
+  if (shownNotifications.has(notificationId)) {
+    console.log('Notification already shown, skipping duplicate:', notificationId);
+    return;
+  }
+
+  // Check if user is currently viewing the relevant page
+  const shouldShowNotification = checkIfShouldShowNotification(payload);
+
+  if (!shouldShowNotification) {
+    console.log('User is already on relevant page, skipping notification');
+    return;
+  }
+
+  // Mark notification as shown
+  shownNotifications.add(notificationId);
+
+  const notificationTitle = payload.notification?.title || 'Shopuff';
   const notificationOptions = {
     body: payload.notification?.body || '',
     icon: '/logo.png',
     badge: '/logo.png',
-    data: payload.data,
+    data: { ...payload.data, notificationId },
+    tag: notificationId, // Prevents duplicate notifications with same tag
     actions: [
       {
         action: 'open',
         title: 'Ouvrir'
       }
-    ]
+    ],
+    requireInteraction: false, // Auto-dismiss after a few seconds
+    silent: false
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
+
+// Check if notification should be shown based on current page
+function checkIfShouldShowNotification(payload) {
+  const data = payload.data || {};
+
+  // If no specific page context, always show
+  if (!data.order_id && !data.url) {
+    return true;
+  }
+
+  // Check if user is currently on the target page
+  return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then(clients => {
+      for (const client of clients) {
+        const clientUrl = new URL(client.url);
+
+        // Check if user is on order chat page
+        if (data.order_id && clientUrl.pathname.includes(`/user/chats`) && client.visible) {
+          return false; // Don't show notification if user is already in chat
+        }
+
+        // Check if user is on specific URL
+        if (data.url && client.url.includes(data.url) && client.visible) {
+          return false; // Don't show notification if user is already on target page
+        }
+      }
+      return true; // Show notification if user is not on relevant page
+    })
+    .catch(() => true); // Default to showing notification on error
+}
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {

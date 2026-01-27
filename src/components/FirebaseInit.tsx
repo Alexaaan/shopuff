@@ -9,11 +9,17 @@ export default function FirebaseInit() {
 
   useEffect(() => {
     const initFirebase = async () => {
-      // Register service worker for FCM and PWA
+      // Register service worker for FCM and PWA (only once)
       if ('serviceWorker' in navigator) {
         try {
-          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-          console.log('✅ Service Worker registered:', registration);
+          // Check if already registered
+          const existingRegistration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+          if (!existingRegistration) {
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            console.log('✅ Service Worker registered:', registration);
+          } else {
+            console.log('ℹ️ Service Worker already registered');
+          }
         } catch (error) {
           console.error('❌ Service Worker registration failed:', error);
         }
@@ -28,12 +34,15 @@ export default function FirebaseInit() {
 
     initFirebase();
 
-    // Listen for foreground messages
-    onMessageListener()
-      .then((payload: any) => {
-        console.log('💬 Foreground message received:', payload);
-      })
-      .catch((err) => console.log('Failed to listen for messages:', err));
+    // Listen for foreground messages (only when app is visible)
+    if (document.visibilityState === 'visible') {
+      onMessageListener()
+        .then((payload: any) => {
+          console.log('💬 Foreground message received:', payload);
+          // Handle foreground messages (could show in-app notification)
+        })
+        .catch((err) => console.log('Failed to listen for messages:', err));
+    }
   }, [user?.id]);
 
   return null;
