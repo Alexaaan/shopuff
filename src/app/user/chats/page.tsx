@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { HeaderUserChats } from '@/components/HeaderUserChats';
 
 const Chat = dynamic(() => import('@/components/Chat'), { ssr: false });
 
@@ -76,57 +77,16 @@ function UserChatsContent() {
 
   if (selectedOrder) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              onClick={() => setSelectedOrder(null)}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-xl transition-all duration-200 border border-slate-600/50 hover:border-slate-500/50"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Retour aux conversations
-            </button>
-            <Link href="/">
-              <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-200 shadow-lg">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                Accueil
-              </button>
-            </Link>
-          </div>
-          <Chat orderId={selectedOrder.id} onClose={() => setSelectedOrder(null)} orderUserId={user?.id} />
-        </div>
-      </div>
+      <Chat orderId={selectedOrder.id} onClose={() => setSelectedOrder(null)} orderUserId={user?.id} />
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Modern Header Component */}
+      <HeaderUserChats />
+
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <button className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-xl transition-all duration-200 border border-slate-600/50 hover:border-slate-500/50">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Retour
-              </button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Mes Conversations</h1>
-              <p className="text-slate-400">Discutez avec nos équipes à propos de vos commandes</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-purple-400">{orders.length}</div>
-            <div className="text-sm text-slate-400">Conversation{orders.length !== 1 ? 's' : ''} active{orders.length !== 1 ? 's' : ''}</div>
-          </div>
-        </div>
 
         {/* Conversations List */}
         <div className="space-y-4">
