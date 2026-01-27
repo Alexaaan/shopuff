@@ -22,7 +22,11 @@ export default function NotificationManager({ className }: NotificationManagerPr
     clearError,
   } = useNotifications();
 
-  const [activeTab, setActiveTab] = useState<'send' | 'history' | 'settings' | 'stats'>('stats');
+  const [activeTab, setActiveTab] = useState<'send' | 'history' | 'settings' | 'stats' | 'delivery'>('stats');
+  const [deliveryLogs, setDeliveryLogs] = useState<any[]>([]);
+  const [deliveryStats, setDeliveryStats] = useState<any>(null);
+  const [loadingDelivery, setLoadingDelivery] = useState(false);
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [notificationForm, setNotificationForm] = useState({
     title: '',
     message: '',
@@ -33,12 +37,29 @@ export default function NotificationManager({ className }: NotificationManagerPr
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<any>(null);
 
-  // Charger les logs au montage
+  // Charger les données selon l'onglet actif
   useEffect(() => {
     if (activeTab === 'history') {
       loadLogs();
+    } else if (activeTab === 'delivery') {
+      loadDeliveryLogs();
     }
   }, [activeTab, loadLogs]);
+
+  const loadDeliveryLogs = async () => {
+    try {
+      setLoadingDelivery(true);
+      const response = await fetch('/api/notifications/delivery-status');
+      if (!response.ok) throw new Error('Erreur chargement logs livraison');
+      const data = await response.json();
+      setDeliveryLogs(data.logs || []);
+      setDeliveryStats(data.stats);
+    } catch (err) {
+      setDeliveryError(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setLoadingDelivery(false);
+    }
+  };
 
   const handleSendNotification = async () => {
     if (!notificationForm.title || !notificationForm.message) {
@@ -109,6 +130,7 @@ export default function NotificationManager({ className }: NotificationManagerPr
           { id: 'stats', label: '📊 Statistiques', color: 'from-blue-500 to-cyan-500' },
           { id: 'send', label: '📤 Envoyer', color: 'from-green-500 to-emerald-500' },
           { id: 'history', label: '📋 Historique', color: 'from-purple-500 to-pink-500' },
+          { id: 'delivery', label: '📬 Statut Livraison', color: 'from-indigo-500 to-purple-500' },
           { id: 'settings', label: '⚙️ Paramètres', color: 'from-orange-500 to-red-500' },
         ].map((tab) => (
           <button
@@ -366,6 +388,109 @@ export default function NotificationManager({ className }: NotificationManagerPr
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Onglet Statut de Livraison */}
+      {activeTab === 'delivery' && (
+        <div className="admin-card p-8">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <span className="text-3xl">📬</span>
+            Statut de Livraison des Notifications
+          </h2>
+
+          {/* Statistiques de livraison */}
+          {deliveryStats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-green-400">{deliveryStats.sent}</div>
+                <div className="text-sm text-green-300">Envoyées</div>
+              </div>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-red-400">{deliveryStats.failed}</div>
+                <div className="text-sm text-red-300">Échouées</div>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-blue-400">{deliveryStats.opened}</div>
+                <div className="text-sm text-blue-300">Ouvertes</div>
+              </div>
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-yellow-400">{deliveryStats.pending}</div>
+                <div className="text-sm text-yellow-300">En attente</div>
+              </div>
+            </div>
+          )}
+
+          {/* Liste des logs de livraison */}
+          {loadingDelivery ? (
+            <div className="admin-loading">
+              <div className="admin-spinner"></div>
+              <p className="text-slate-300 ml-4">Chargement des statuts de livraison...</p>
+            </div>
+          ) : deliveryLogs.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📭</div>
+              <p className="text-slate-400 text-lg">Aucun log de livraison trouvé</p>
+              <p className="text-slate-500 text-sm mt-2">Les statuts apparaîtront ici après l'envoi de notifications</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {deliveryLogs.map((log) => (
+                <div key={log.id} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:bg-slate-800/70 transition-all duration-300">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {/* Status Badge */}
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        log.status === 'sent' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                        log.status === 'failed' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
+                        log.status === 'opened' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                        'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                      }`}>
+                        {log.status === 'sent' ? '✅ Envoyée' :
+                         log.status === 'failed' ? '❌ Échouée' :
+                         log.status === 'opened' ? '👁️ Ouverte' :
+                         '⏳ En attente'}
+                      </span>
+
+                      {/* User Info */}
+                      <div className="text-sm">
+                        <div className="text-white font-medium">
+                          {log.users?.name || `User ${log.user_id}`}
+                        </div>
+                        <div className="text-slate-400">
+                          {log.platform} • {formatDate(log.sent_at)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Error Message */}
+                    {log.error_message && (
+                      <div className="text-red-300 text-sm max-w-xs truncate" title={log.error_message}>
+                        {log.error_message}
+                      </div>
+                    )}
+
+                    {/* Opened At */}
+                    {log.opened_at && (
+                      <div className="text-blue-300 text-sm">
+                        Ouvert: {formatDate(log.opened_at)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Error Display */}
+          {deliveryError && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mt-6">
+              <p className="text-red-300 flex items-center gap-2">
+                <span>⚠️</span>
+                {deliveryError}
+              </p>
             </div>
           )}
         </div>
