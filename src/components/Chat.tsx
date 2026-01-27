@@ -55,13 +55,7 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
 
         // Show notification if from other user and document is hidden (for web)
         if (newMsg.users && newMsg.users.id !== user?.id) {
-          if (document.hidden && Notification.permission === 'granted') {
-            new Notification(`Nouveau message de ${newMsg.users.prenom} ${newMsg.users.nom}`, {
-              body: newMsg.message,
-              icon: '/logo.png',
-            });
-          }
-          // Play sound
+          // Play sound only (notifications are handled by Service Worker to avoid duplicates)
           const audio = new Audio('/notification.mp3'); // Assume we have a sound file
           audio.play().catch(() => {}); // Ignore errors if no sound file
         }
