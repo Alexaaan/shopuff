@@ -27,9 +27,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { nom, prix, image, description, stock, created_by } = body;
 
-    console.log('Creating offline product with data:', { nom, prix, image, description, stock, created_by });
+    // Parse and validate inputs
+    const parsedPrix = typeof prix === 'string' ? parseFloat(prix) : prix;
+    const parsedStock = typeof stock === 'string' ? parseInt(stock) : stock;
 
-    if (!nom || prix === undefined || isNaN(prix) || prix <= 0) {
+    console.log('Creating offline product with data:', { nom, prix, image, description, stock, created_by });
+    console.log('Parsed data:', { nom, parsedPrix, parsedStock, created_by });
+
+    if (!nom || parsedPrix === undefined || isNaN(parsedPrix) || parsedPrix <= 0) {
+      console.log('Validation failed:', { nom: !!nom, parsedPrix, isNaN: isNaN(parsedPrix), prixCheck: parsedPrix <= 0 });
       return NextResponse.json({ error: 'Name and valid positive price are required' }, { status: 400 });
     }
 
@@ -54,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier si l'utilisateur existe (optionnel pour les produits offline)
     let validCreatedBy = null;
-    if (created_by) {
+    if (created_by && typeof created_by === 'number') {
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id')
@@ -73,10 +79,10 @@ export async function POST(request: NextRequest) {
       .from('offline_products')
       .insert({
         nom,
-        prix,
+        prix: parsedPrix,
         image,
         description,
-        stock: stock || 0,
+        stock: parsedStock || 0,
         created_by: validCreatedBy
       })
       .select()

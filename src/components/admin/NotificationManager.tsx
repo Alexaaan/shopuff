@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 
 interface NotificationManagerProps {
   className?: string;
 }
 
-export default function NotificationManager({ className }: NotificationManagerProps) {
+function NotificationManager({ className }: NotificationManagerProps) {
   const {
     stats,
     settings,
@@ -46,7 +46,7 @@ export default function NotificationManager({ className }: NotificationManagerPr
     }
   }, [activeTab, loadLogs]);
 
-  const loadDeliveryLogs = async () => {
+  const loadDeliveryLogs = useCallback(async () => {
     try {
       setLoadingDelivery(true);
       const response = await fetch('/api/notifications/delivery-status');
@@ -59,9 +59,9 @@ export default function NotificationManager({ className }: NotificationManagerPr
     } finally {
       setLoadingDelivery(false);
     }
-  };
+  }, []);
 
-  const handleSendNotification = async () => {
+  const handleSendNotification = useCallback(async () => {
     if (!notificationForm.title || !notificationForm.message) {
       alert('Titre et message sont requis');
       return;
@@ -87,13 +87,32 @@ export default function NotificationManager({ className }: NotificationManagerPr
       });
     }
     setSending(false);
-  };
+  }, [notificationForm, sendNotification]);
 
-  const handleSettingChange = async (key: string, value: boolean) => {
+  const handleSettingChange = useCallback(async (key: string, value: boolean) => {
     await updateSettings({ [key]: value.toString() });
-  };
+  }, [updateSettings]);
 
-  const getTypeColor = (type: string) => {
+
+
+  const formatDate = useCallback((dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, []);
+
+  // Memoization des valeurs calculées
+  const tabItems = useMemo(() => [
+    { id: 'stats', label: '📊 Statistiques', color: 'from-blue-500 to-cyan-500' },
+    { id: 'send', label: '📤 Envoyer', color: 'from-green-500 to-emerald-500' },
+    { id: 'history', label: '📋 Historique', color: 'from-purple-500 to-pink-500' },
+    { id: 'delivery', label: '📬 Statut Livraison', color: 'from-indigo-500 to-purple-500' },
+    { id: 'settings', label: '⚙️ Paramètres', color: 'from-orange-500 to-red-500' },
+  ], []);
+
+  const getTypeColor = useCallback((type: string) => {
     switch (type) {
       case 'info': return 'bg-blue-100 text-blue-800';
       case 'warning': return 'bg-yellow-100 text-yellow-800';
@@ -103,36 +122,22 @@ export default function NotificationManager({ className }: NotificationManagerPr
       case 'message': return 'bg-indigo-100 text-indigo-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
+  }, []);
 
-  const getTargetLabel = (targetType: string, targetValue?: string | null) => {
+  const getTargetLabel = useCallback((targetType: string, targetValue?: string | null) => {
     switch (targetType) {
       case 'all': return 'Tous les utilisateurs';
       case 'role': return `Rôle: ${targetValue}`;
       case 'user': return `Utilisateur ID: ${targetValue}`;
       default: return targetType;
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  }, []);
 
   return (
     <div className={`space-y-8 ${className}`}>
       {/* Onglets Modernes */}
       <div className="flex flex-wrap gap-2 bg-slate-800/50 backdrop-blur-xl p-2 rounded-2xl border border-slate-700/50">
-        {[
-          { id: 'stats', label: '📊 Statistiques', color: 'from-blue-500 to-cyan-500' },
-          { id: 'send', label: '📤 Envoyer', color: 'from-green-500 to-emerald-500' },
-          { id: 'history', label: '📋 Historique', color: 'from-purple-500 to-pink-500' },
-          { id: 'delivery', label: '📬 Statut Livraison', color: 'from-indigo-500 to-purple-500' },
-          { id: 'settings', label: '⚙️ Paramètres', color: 'from-orange-500 to-red-500' },
-        ].map((tab) => (
+        {tabItems.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
@@ -540,3 +545,5 @@ export default function NotificationManager({ className }: NotificationManagerPr
     </div>
   );
 }
+
+export default React.memo(NotificationManager);
