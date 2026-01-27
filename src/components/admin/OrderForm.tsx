@@ -24,12 +24,15 @@ interface OrderItem {
 }
 
 interface OrderFormData {
-  client_type: 'existing' | 'new';
+  client_type: 'existing' | 'new' | 'unique';
   existing_client_id?: number;
   new_client: {
     nom: string;
     prenom: string;
     telephone: string;
+  };
+  unique_client: {
+    prenom: string;
   };
   items: OrderItem[];
   payment_method: string;
@@ -54,6 +57,9 @@ export default function OrderForm({ onSubmit, onCancel, loading = false }: Order
       nom: '',
       prenom: '',
       telephone: ''
+    },
+    unique_client: {
+      prenom: ''
     },
     items: [],
     payment_method: 'espece',
@@ -157,6 +163,11 @@ export default function OrderForm({ onSubmit, onCancel, loading = false }: Order
       return;
     }
 
+    if (formData.client_type === 'unique' && !formData.unique_client.prenom.trim()) {
+      alert('Veuillez saisir le prénom du client pour la vente rapide');
+      return;
+    }
+
     // Combiner date et heure
     const orderDateTime = new Date(`${formData.order_date}T${formData.order_time}`);
 
@@ -211,28 +222,48 @@ export default function OrderForm({ onSubmit, onCancel, loading = false }: Order
           <label className="block text-sm font-medium text-slate-300 mb-4">
             Type de client *
           </label>
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label className="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-800/50 transition-all">
               <input
                 type="radio"
                 name="client_type"
                 value="existing"
                 checked={formData.client_type === 'existing'}
-                onChange={(e) => setFormData(prev => ({ ...prev, client_type: e.target.value as 'existing' | 'new' }))}
-                className="text-purple-500"
+                onChange={(e) => setFormData(prev => ({ ...prev, client_type: e.target.value as 'existing' | 'new' | 'unique' }))}
+                className="text-purple-500 w-4 h-4"
               />
-              <span className="text-white">Client existant</span>
+              <div>
+                <div className="text-white font-medium">👤 Client existant</div>
+                <div className="text-slate-400 text-sm">Depuis la base de données</div>
+              </div>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-800/50 transition-all">
               <input
                 type="radio"
                 name="client_type"
                 value="new"
                 checked={formData.client_type === 'new'}
-                onChange={(e) => setFormData(prev => ({ ...prev, client_type: e.target.value as 'existing' | 'new' }))}
-                className="text-purple-500"
+                onChange={(e) => setFormData(prev => ({ ...prev, client_type: e.target.value as 'existing' | 'new' | 'unique' }))}
+                className="text-purple-500 w-4 h-4"
               />
-              <span className="text-white">Nouveau client</span>
+              <div>
+                <div className="text-white font-medium">➕ Nouveau client</div>
+                <div className="text-slate-400 text-sm">Créer un compte</div>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-800/50 transition-all">
+              <input
+                type="radio"
+                name="client_type"
+                value="unique"
+                checked={formData.client_type === 'unique'}
+                onChange={(e) => setFormData(prev => ({ ...prev, client_type: e.target.value as 'existing' | 'new' | 'unique' }))}
+                className="text-purple-500 w-4 h-4"
+              />
+              <div>
+                <div className="text-white font-medium">🎯 Vente rapide</div>
+                <div className="text-slate-400 text-sm">Juste un prénom</div>
+              </div>
             </label>
           </div>
         </div>
@@ -308,6 +339,38 @@ export default function OrderForm({ onSubmit, onCancel, loading = false }: Order
                 placeholder="06XXXXXXXX"
                 required
               />
+            </div>
+          </div>
+        )}
+
+        {/* Commande unique */}
+        {formData.client_type === 'unique' && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-2xl">🎯</span>
+              <div>
+                <h3 className="text-lg font-medium text-amber-300">Vente rapide</h3>
+                <p className="text-amber-200 text-sm">Commande sans création de compte client</p>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Prénom du client *
+              </label>
+              <input
+                type="text"
+                className="admin-form-input"
+                value={formData.unique_client.prenom}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  unique_client: { prenom: e.target.value }
+                }))}
+                placeholder="Ex: Marie, Jean, etc."
+                required
+              />
+              <p className="text-xs text-slate-400 mt-2">
+                💡 Juste pour identifier la vente - aucun compte ne sera créé
+              </p>
             </div>
           </div>
         )}

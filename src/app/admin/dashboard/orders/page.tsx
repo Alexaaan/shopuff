@@ -256,7 +256,10 @@ export default function Orders() {
                       {order.users.prenom} {order.users.nom}
                     </div>
                     <div className="text-sm text-slate-400">
-                      {order.users.email}
+                      {order.users.nom.startsWith('Client-') && order.users.nom.includes(order.users.prenom)
+                        ? 'Client unique'
+                        : order.users.email || 'N/A'
+                      }
                     </div>
                   </td>
                   <td>

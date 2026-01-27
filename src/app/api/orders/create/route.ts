@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 
 interface OrderData {
-  client_type: 'existing' | 'new';
+  client_type: 'existing' | 'new' | 'unique';
   existing_client_id?: number;
   new_client?: {
     nom: string;
     prenom: string;
-    email: string;
-    telephone?: string;
+    telephone: string;
+  };
+  unique_client?: {
+    prenom: string;
   };
   items: {
     product_id: number;
@@ -31,6 +33,32 @@ export async function POST(request: NextRequest) {
     console.log('📦 Creating new order:', data);
 
     let clientId = data.existing_client_id;
+
+    // Pour les commandes uniques, on utilise un client temporaire (pas de création)
+    if (data.client_type === 'unique' && data.unique_client) {
+      // Créer un client temporaire pour les commandes uniques
+      const tempClientName = `Client-${data.unique_client.prenom}-${Date.now()}`;
+      const { data: tempClient, error: tempError } = await supabase
+        .from('users')
+        .insert({
+          nom: tempClientName,
+          prenom: data.unique_client.prenom,
+          telephone: `TEMP${Date.now()}`,
+          secret_code: 'temp123',
+          role: 'user',
+          is_active: false // Client temporaire, pas actif
+        })
+        .select()
+        .single();
+
+      if (tempError) {
+        console.error('❌ Error creating temp client:', tempError);
+        return NextResponse.json({ error: 'Erreur création client temporaire' }, { status: 500 });
+      }
+
+      clientId = tempClient.id;
+      console.log('✅ Temp client created for unique order:', clientId);
+    }
 
     // Créer un nouveau client si nécessaire
     if (data.client_type === 'new' && data.new_client) {
