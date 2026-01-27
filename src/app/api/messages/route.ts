@@ -191,7 +191,6 @@ export async function POST(request: NextRequest) {
             data: {
               order_id: order_id.toString(),
               type: 'chat',
-              messageId: `msg-${data.id}-${Date.now()}`, // Unique message ID for deduplication
               click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
             }
           };
