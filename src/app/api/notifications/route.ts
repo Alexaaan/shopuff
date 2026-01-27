@@ -83,6 +83,8 @@ export async function POST(request: NextRequest) {
     const supabase = await getSupabase();
     const { title, message, type, target, targetValue } = await request.json();
 
+    console.log('Sending notification:', { title, message, type, target, targetValue });
+
     if (!title || !message) {
       return NextResponse.json({ error: 'Titre et message requis' }, { status: 400 });
     }
@@ -96,11 +98,18 @@ export async function POST(request: NextRequest) {
     if (target === 'role') {
       deviceQuery = deviceQuery.eq('users.role', targetValue);
     } else if (target === 'user') {
-      deviceQuery = deviceQuery.eq('user_id', parseInt(targetValue));
+      const userId = parseInt(targetValue);
+      console.log('Targeting user ID:', userId, 'from targetValue:', targetValue);
+      if (isNaN(userId)) {
+        return NextResponse.json({ error: 'ID utilisateur invalide' }, { status: 400 });
+      }
+      deviceQuery = deviceQuery.eq('user_id', userId);
     }
     // Pour 'all', pas de filtre supplémentaire
 
     const { data: targetDevices, error: devicesError } = await deviceQuery;
+
+    console.log('Target devices query result:', { targetDevices, devicesError });
 
     if (devicesError) {
       console.error('Error fetching target devices:', devicesError);
@@ -112,11 +121,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialiser Firebase Admin
+    console.log('Initializing Firebase Admin...');
     if (!admin.apps.length) {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
+      try {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
+        console.log('Firebase service account loaded:', !!serviceAccount.project_id);
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+        console.log('Firebase Admin initialized successfully');
+      } catch (firebaseError) {
+        console.error('Error initializing Firebase:', firebaseError);
+        return NextResponse.json({ error: 'Erreur configuration Firebase' }, { status: 500 });
+      }
     }
 
     // Créer la notification
@@ -131,6 +148,8 @@ export async function POST(request: NextRequest) {
       },
     };
 
+    console.log('Sending to', targetDevices.length, 'devices');
+
     // Envoyer à tous les devices cibles
     const sendPromises = targetDevices.map((device: any) =>
       admin.messaging().send({
@@ -140,15 +159,19 @@ export async function POST(request: NextRequest) {
         token: device.device_token,
         success: true,
         userId: device.user_id
-      })).catch((err: any) => ({
-        token: device.device_token,
-        success: false,
-        error: err.message,
-        userId: device.user_id
-      }))
+      })).catch((err: any) => {
+        console.error('Error sending to device:', device.device_token, err.message);
+        return {
+          token: device.device_token,
+          success: false,
+          error: err.message,
+          userId: device.user_id
+        };
+      })
     );
 
     const results = await Promise.all(sendPromises);
+    console.log('Send results:', results);
 
     const successCount = results.filter(r => r.success).length;
     const failureCount = results.length - successCount;
