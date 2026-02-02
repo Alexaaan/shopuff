@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin (only once)
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: "shopu-d287a",
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    }),
+  });
+}
 
 interface OrderData {
   client_type: 'existing' | 'new' | 'unique';
@@ -186,6 +198,9 @@ export async function POST(request: NextRequest) {
 
     console.log('🎉 Order created successfully!');
 
+    // Send notification to all admins
+    await sendOrderNotificationToAdmins(supabase, order, data.items);
+
     return NextResponse.json({
       success: true,
       order: order,
@@ -195,5 +210,98 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Error in order creation:', error);
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+  }
+}
+
+// Helper function to send order notifications to admins
+async function sendOrderNotificationToAdmins(supabase: any, order: any, items: any[]) {
+  try {
+    // Récupérer les noms des produits pour la notification
+    const productIds = items.map((op: any) => op.product_id);
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('id, nom')
+      .in('id', productIds);
+
+    if (productsError) {
+      console.error('Error fetching product names:', productsError);
+    }
+
+    // Créer un mapping id -> nom
+    const productNames: { [key: number]: string } = {};
+    products?.forEach((product: any) => {
+      productNames[product.id] = product.nom;
+    });
+
+    // Récupérer les devices de tous les admins
+    const { data: adminDevices, error: devicesError } = await supabase
+      .from('user_devices')
+      .select('device_token, platform')
+      .eq('is_active', true)
+      .in('user_id',
+        (await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'admin')
+          .eq('is_active', true)
+        ).data?.map((admin: any) => admin.id) || []
+      );
+
+    if (devicesError || !adminDevices || adminDevices.length === 0) {
+      console.log('No admin devices found for notifications');
+      return;
+    }
+
+    // Créer le message de notification
+    const orderProducts = items.map((op: any) => {
+      const productName = productNames[op.product_id] || 'produit';
+      return `${op.quantite}x ${productName}`;
+    }).join(', ');
+
+    const message = {
+      notification: {
+        title: '🛒 Nouvelle commande !',
+        body: `Commande #${order.id} - ${orderProducts}`,
+      },
+      data: {
+        type: 'new_order',
+        orderId: order.id.toString(),
+        total: order.total.toString(),
+      },
+      webpush: {
+        notification: {
+          title: '🛒 Nouvelle commande !',
+          body: `Commande #${order.id} - ${orderProducts}`,
+          icon: '/logo.png',
+          badge: '/logo.png',
+          data: {
+            order_id: order.id.toString(),
+            type: 'new_order',
+            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/orders?orderId=${order.id}`
+          },
+          actions: [
+            { action: 'open', title: 'Voir commande' }
+          ]
+        },
+        fcmOptions: {
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/orders?orderId=${order.id}`
+        }
+      }
+    };
+
+    // Envoyer à tous les devices des admins
+    for (const device of adminDevices) {
+      try {
+        await admin.messaging().send({
+          ...message,
+          token: device.device_token,
+        });
+        console.log(`✅ Notification sent to admin device for order ${order.id}`);
+      } catch (err: any) {
+        console.error('❌ Error sending notification to admin device:', err.message);
+      }
+    }
+  } catch (notificationError) {
+    console.error('❌ Error sending order notification to admins:', notificationError);
   }
 }

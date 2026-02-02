@@ -28,6 +28,7 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false); // Anti-double envoi
   const channelRef = useRef<any>(null);
   const fcmHandlerRef = useRef<any>(null);
 
@@ -117,7 +118,11 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || sending) return;
+
+    setSending(true);
+    const messageToSend = newMessage.trim();
+    setNewMessage(''); // Clear immediately to prevent double send
 
     try {
       const response = await fetch('/api/messages', {
@@ -126,7 +131,7 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
         body: JSON.stringify({
           order_id: orderId,
           user_id: user.id,
-          message: newMessage.trim(),
+          message: messageToSend,
           is_chat_open: true
         })
       });
@@ -134,10 +139,13 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
       if (response.ok) {
         const result = await response.json();
         setMessages(prev => [...prev, result.message]);
-        setNewMessage('');
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Restore message on error
+      setNewMessage(messageToSend);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -263,15 +271,20 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Tapez votre message..."
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-200"
+            onKeyPress={(e) => e.key === 'Enter' && !sending && sendMessage()}
+            disabled={sending}
+            className={`flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-200 ${sending ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           <button
             onClick={sendMessage}
-            disabled={!newMessage.trim()}
-            className="px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-600 disabled:to-slate-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-purple-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!newMessage.trim() || sending}
+            className={`px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-600 disabled:to-slate-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-purple-500/25 disabled:cursor-not-allowed disabled:opacity-50 ${sending ? 'animate-pulse' : ''}`}
           >
-            <Send className="w-5 h-5" />
+            {sending ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
