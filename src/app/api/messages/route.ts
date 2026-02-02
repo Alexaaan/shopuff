@@ -27,9 +27,11 @@ export async function GET(request: NextRequest) {
       .from('messages')
       .select(`
         id,
+        client_id,
         message,
         created_at,
         user_id,
+        read_at,
         users (
           id,
           nom,
@@ -54,19 +56,34 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await getSupabase();
-    const { order_id, user_id, message, is_chat_open } = await request.json();
+    const { order_id, user_id, message, is_chat_open, client_id } = await request.json();
 
     if (!order_id || !user_id || !message) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    // Insert message
+    // Check for duplicate by client_id (deduplication)
+    if (client_id) {
+      const { data: existing } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('client_id', client_id)
+        .single();
+      
+      if (existing) {
+        console.log('Duplicate message detected, skipping:', client_id);
+        return NextResponse.json({ success: true, duplicate: true, message: existing });
+      }
+    }
+
+    // Insert message with client_id for deduplication
     const { data, error } = await supabase
       .from('messages')
       .insert({
         order_id,
         user_id,
-        message
+        message,
+        client_id: client_id || null
       })
       .select()
       .single();
@@ -108,6 +125,7 @@ export async function POST(request: NextRequest) {
       .single();
     
     const senderName = sender ? `${sender.prenom} ${sender.nom}` : 'Client';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app';
 
     // Get all admin users who should receive notifications
     const { data: admins } = await supabase
@@ -117,23 +135,21 @@ export async function POST(request: NextRequest) {
 
     const adminIds = admins?.map((a: { id: number }) => a.id) || [];
 
-    // Send notification to ALL admins
+    // Send notification to ALL admins (if not active in chat)
     if (adminIds.length > 0) {
       for (const adminUser of admins) {
-        // Skip if admin is the one sending the message
         if (adminUser.id === user_id) continue;
 
-        // Check if admin is active in chat
+        // Check if admin is active in ANY chat (not just this one)
         const { data: presence } = await supabase
           .from('chat_presence')
           .select('id')
           .eq('user_id', adminUser.id)
-          .eq('order_id', order_id)
           .eq('is_active', true)
           .single();
 
         if (presence) {
-          // Admin is active, no notification needed
+          // Admin is active somewhere, skip notification
           continue;
         }
 
@@ -142,7 +158,7 @@ export async function POST(request: NextRequest) {
           .from('notifications')
           .insert({
             title: '💬 Réponse client',
-            message: `${senderName}: ${message.length > 100 ? message.substring(0, 100) + '...' : message}`,
+            message: `${senderName}: ${message.length > 80 ? message.substring(0, 80) + '...' : message}`,
             type: 'info',
             action_url: `/admin/dashboard/chats?orderId=${order_id}`,
             status: 'sent',
@@ -157,7 +173,6 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Create target
         await supabase
           .from('notification_targets')
           .insert({
@@ -174,43 +189,47 @@ export async function POST(request: NextRequest) {
           .eq('is_active', true);
 
         if (devices && devices.length > 0) {
+          const chatUrl = `${siteUrl}/admin/dashboard/chats?orderId=${order_id}`;
+          
           for (const device of devices) {
             try {
               const fcmMessage = {
                 token: device.device_token,
                 notification: {
-                  title: `💬 Réponse - Commande #${order_id}`,
-                  body: `${senderName} a répondu`,
+                  title: `💬 Commande #${order_id}`,
+                  body: `${senderName}: ${message.length > 50 ? message.substring(0, 50) + '...' : message}`,
                 },
                 webpush: {
                   notification: {
-                    title: `💬 Réponse - Commande #${order_id}`,
-                    body: `${senderName} a répondu`,
+                    title: `💬 Commande #${order_id}`,
+                    body: `${senderName}: ${message.length > 50 ? message.substring(0, 50) + '...' : message}`,
                     icon: '/logo.png',
                     badge: '/logo.png',
+                    tag: `chat-${order_id}-${user_id}`,
                     data: {
                       order_id: order_id.toString(),
-                      type: 'chat_reply',
-                      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/chats?orderId=${order_id}`
+                      message_id: data.id.toString(),
+                      sender_id: user_id.toString(),
+                      type: 'chat_message',
+                      target_url: `/admin/dashboard/chats?orderId=${order_id}`
                     },
                     actions: [
-                      { action: 'open', title: 'Ouvrir' }
+                      { action: 'open', title: '🗨️ Ouvrir' }
                     ]
                   },
-                  fcmOptions: {
-                    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/chats?orderId=${order_id}`
-                  }
+                  fcmOptions: { link: chatUrl }
                 },
                 data: {
                   order_id: order_id.toString(),
-                  type: 'chat_reply',
-                  click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/chats?orderId=${order_id}`
+                  message_id: data.id.toString(),
+                  sender_id: user_id.toString(),
+                  type: 'chat_message',
+                  target_url: `/admin/dashboard/chats?orderId=${order_id}`
                 }
               };
 
               await admin.messaging().send(fcmMessage);
 
-              // Log success
               await supabase
                 .from('notification_logs')
                 .insert({
@@ -222,7 +241,7 @@ export async function POST(request: NextRequest) {
                 });
 
             } catch (fcmError: any) {
-              console.error('FCM error for admin:', fcmError);
+              console.error('FCM error for admin:', fcmError.message);
               await supabase
                 .from('notification_logs')
                 .insert({
@@ -243,22 +262,20 @@ export async function POST(request: NextRequest) {
     const recipient_id = user_id === order.utilisateur_id ? order.vendeur_id : order.utilisateur_id;
     
     if (recipient_id && !adminIds.includes(recipient_id)) {
-      // Check if recipient is active in chat
+      // Check if recipient is active in ANY chat
       const { data: presence } = await supabase
         .from('chat_presence')
         .select('id')
         .eq('user_id', recipient_id)
-        .eq('order_id', order_id)
         .eq('is_active', true)
         .single();
 
       if (!presence) {
-        // Create notification for recipient
         const { data: notif, error: notifError } = await supabase
           .from('notifications')
           .insert({
             title: 'Nouveau message',
-            message: message.length > 100 ? message.substring(0, 100) + '...' : message,
+            message: message.length > 80 ? message.substring(0, 80) + '...' : message,
             type: 'info',
             action_url: `/user/chats?orderId=${order_id}`,
             status: 'sent',
@@ -269,7 +286,6 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (!notifError) {
-          // Create target
           await supabase
             .from('notification_targets')
             .insert({
@@ -278,7 +294,6 @@ export async function POST(request: NextRequest) {
               target_value: recipient_id.toString()
             });
 
-          // Send FCM push
           const { data: devices } = await supabase
             .from('user_devices')
             .select('device_token, platform')
@@ -286,43 +301,47 @@ export async function POST(request: NextRequest) {
             .eq('is_active', true);
 
           if (devices && devices.length > 0) {
+            const chatUrl = `${siteUrl}/user/chats?orderId=${order_id}`;
+            
             for (const device of devices) {
               try {
                 const fcmMessage = {
                   token: device.device_token,
                   notification: {
                     title: `Commande #${order_id}`,
-                    body: `Nouveau message`,
+                    body: `${senderName}: ${message.length > 50 ? message.substring(0, 50) + '...' : message}`,
                   },
                   webpush: {
                     notification: {
                       title: `Commande #${order_id}`,
-                      body: `Nouveau message`,
+                      body: `${senderName}: ${message.length > 50 ? message.substring(0, 50) + '...' : message}`,
                       icon: '/logo.png',
                       badge: '/logo.png',
+                      tag: `chat-${order_id}-${user_id}`,
                       data: {
                         order_id: order_id.toString(),
-                        type: 'chat',
-                        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
+                        message_id: data.id.toString(),
+                        sender_id: user_id.toString(),
+                        type: 'chat_message',
+                        target_url: `/user/chats?orderId=${order_id}`
                       },
                       actions: [
-                        { action: 'open', title: 'Ouvrir' }
+                        { action: 'open', title: '🗨️ Ouvrir' }
                       ]
                     },
-                    fcmOptions: {
-                      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
-                    }
+                    fcmOptions: { link: chatUrl }
                   },
                   data: {
                     order_id: order_id.toString(),
-                    type: 'chat',
-                    click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
+                    message_id: data.id.toString(),
+                    sender_id: user_id.toString(),
+                    type: 'chat_message',
+                    target_url: `/user/chats?orderId=${order_id}`
                   }
                 };
 
                 await admin.messaging().send(fcmMessage);
 
-                // Log success
                 await supabase
                   .from('notification_logs')
                   .insert({
@@ -334,7 +353,7 @@ export async function POST(request: NextRequest) {
                   });
 
               } catch (fcmError: any) {
-                console.error('FCM error:', fcmError);
+                console.error('FCM error:', fcmError.message);
                 await supabase
                   .from('notification_logs')
                   .insert({
