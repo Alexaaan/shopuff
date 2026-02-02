@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 
 const Chat = dynamic(() => import('@/components/Chat'), { ssr: false });
 
@@ -28,10 +29,22 @@ export default function AdminChats() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     fetchPendingOrders();
   }, []);
+
+  // Auto-open chat if orderId in URL
+  useEffect(() => {
+    const orderId = searchParams.get('orderId');
+    if (orderId && orders.length > 0) {
+      const order = orders.find(o => o.id === parseInt(orderId));
+      if (order) {
+        setSelectedOrder(order);
+      }
+    }
+  }, [searchParams, orders]);
 
   const fetchPendingOrders = async () => {
     try {

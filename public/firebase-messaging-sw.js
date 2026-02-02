@@ -28,25 +28,22 @@ const DEFAULT_SITE_URL = 'https://shopuff.vercel.app';
 function getTargetUrl(data) {
   if (!data) return DEFAULT_SITE_URL;
   
-  // Priority: target_url > type-specific URL > fallback
-  if (data.target_url) {
-    return data.target_url.startsWith('http') ? data.target_url : `${DEFAULT_SITE_URL}${data.target_url}`;
-  }
-  
-  // Build URL based on type
   const orderId = data.order_id;
   const type = data.type;
   
+  // Build URL based on type - use path format for proper routing
   if (type === 'chat_message' || type === 'chat_reply') {
-    return `${DEFAULT_SITE_URL}/admin/dashboard/chats?orderId=${orderId}`;
+    // For admin chats
+    return `${DEFAULT_SITE_URL}/admin/dashboard/chats`;
   }
   
   if (type === 'new_order') {
-    return `${DEFAULT_SITE_URL}/admin/dashboard/orders?orderId=${orderId}`;
+    // For new orders - redirect to orders page
+    return `${DEFAULT_SITE_URL}/admin/dashboard/orders`;
   }
   
   if (orderId) {
-    return `${DEFAULT_SITE_URL}/orders/${orderId}`;
+    return `${DEFAULT_SITE_URL}`;
   }
   
   return DEFAULT_SITE_URL;
