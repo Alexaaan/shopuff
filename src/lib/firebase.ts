@@ -124,13 +124,34 @@ export const requestFCMToken = async (userId: number, retryCount = 0): Promise<s
   }
 };
 
-// Handle foreground messages
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    if (messaging) {
-      onMessage(messaging, (payload) => {
-        console.log('Message received:', payload);
-        resolve(payload);
-      });
+// Handle foreground messages - singleton pattern to avoid duplicate listeners
+let messageListener: (() => void) | null = null;
+
+export const onMessageListener = (callback?: (payload: any) => void): (() => void) | null => {
+  if (!messaging) return null;
+  
+  // If already registered, don't register again
+  if (messageListener) {
+    console.log('⚠️ Message listener already registered, skipping duplicate');
+    return messageListener;
+  }
+  
+  const unsubscribe = onMessage(messaging, (payload) => {
+    console.log('💬 Foreground message received:', payload);
+    
+    // Call callback if provided (for Chat component)
+    if (callback) {
+      callback(payload);
+    }
+    
+    // Also dispatch custom event for other components
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('fcm-message', { detail: payload }));
     }
   });
+  
+  messageListener = unsubscribe;
+  console.log('✅ FCM message listener registered');
+  
+  return unsubscribe;
+};

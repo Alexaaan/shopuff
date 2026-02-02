@@ -53,7 +53,7 @@ export const HeroSection = () => {
           >
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-poppins text-muted-foreground">
-              Collection exclusive ✨
+               shopuff ✨
             </span>
           </motion.div>
 
@@ -76,8 +76,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="font-poppins text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6"
           >
-            Découvrez des puffs inspirées des merveilles de l'univers, alliant
-            saveurs premium et gout.
+            Découvrez notre sélection de puffs.
           </motion.p>
 
           {/* CTA Buttons */}

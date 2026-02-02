@@ -1,13 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { onMessageListener, requestFCMToken } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function FirebaseInit() {
   const { user } = useAuth();
+  const initializedRef = useRef(false);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // Prevent double initialization
+    if (initializedRef.current) {
+      return;
+    }
+    
     const initFirebase = async () => {
       // Register service worker for FCM and PWA
       if ('serviceWorker' in navigator) {
@@ -27,13 +34,31 @@ export default function FirebaseInit() {
     };
 
     initFirebase();
+    initializedRef.current = true;
 
-    // Listen for foreground messages
-    onMessageListener()
-      .then((payload: any) => {
-        console.log('💬 Foreground message received:', payload);
-      })
-      .catch((err) => console.log('Failed to listen for messages:', err));
+    // Listen for foreground messages - only once
+    unsubscribeRef.current = onMessageListener();
+    
+    return () => {
+      // Cleanup: unsubscribe when component unmounts
+      if (unsubscribeRef.current) {
+        console.log('🧹 Cleaning up FCM message listener');
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+        // Reset singleton to allow re-registration
+        (async () => {
+          const { messaging } = await import('@/lib/firebase');
+          if (messaging) {
+            const { getMessaging } = await import('firebase/messaging');
+            try {
+              getMessaging(messaging.app);
+            } catch (e) {
+              // Ignore
+            }
+          }
+        })();
+      }
+    };
   }, [user?.id]);
 
   return null;

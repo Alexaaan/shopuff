@@ -68,7 +68,7 @@ export const ProductsSection = () => {
           </h2>
 
           <p className="font-poppins text-lg text-muted-foreground max-w-2xl mx-auto">
-            Explorez notre sélection exclusive
+          
           </p>
         </motion.div>
 

@@ -29,6 +29,7 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<any>(null);
+  const fcmHandlerRef = useRef<any>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -40,6 +41,22 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user?.id, order_id: orderId, is_active: true })
     }).catch(() => {});
+
+    // Listen for FCM messages via custom event (for new_order notifications)
+    const handleFCMMessage = (event: CustomEvent) => {
+      const payload = event.detail;
+      if (payload?.data?.type === 'new_order' && payload.data.orderId) {
+        // Refresh messages when a new order notification arrives
+        fetchMessages();
+        // Play notification sound
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(() => {});
+      }
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('fcm-message', handleFCMMessage as EventListener);
+    }
 
     // Subscribe to real-time updates
     const channel = supabase
@@ -72,6 +89,11 @@ const Chat = ({ orderId, onClose, orderUserId }: ChatProps) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user?.id, order_id: orderId, is_active: false })
       }).catch(() => {});
+      
+      // Cleanup FCM listener
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('fcm-message', handleFCMMessage as EventListener);
+      }
     };
   }, [orderId, user?.id]);
 
