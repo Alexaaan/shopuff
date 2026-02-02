@@ -100,126 +100,254 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: data });
     }
 
-    const recipient_id = user_id === order.utilisateur_id ? order.vendeur_id : order.utilisateur_id;
+    // Get the sender's info
+    const { data: sender } = await supabase
+      .from('users')
+      .select('prenom, nom')
+      .eq('id', user_id)
+      .single();
+    
+    const senderName = sender ? `${sender.prenom} ${sender.nom}` : 'Client';
 
-    if (!recipient_id) {
-      return NextResponse.json({ success: true, message: data });
-    }
-
-    // Check if recipient is active in chat
-    const { data: presence } = await supabase
-      .from('chat_presence')
+    // Get all admin users who should receive notifications
+    const { data: admins } = await supabase
+      .from('users')
       .select('id')
-      .eq('user_id', recipient_id)
-      .eq('order_id', order_id)
-      .eq('is_active', true)
-      .single();
+      .eq('role', 'admin');
 
-    if (presence) {
-      // User is active, no notification
-      return NextResponse.json({ success: true, message: data });
-    }
+    const adminIds = admins?.map((a: { id: number }) => a.id) || [];
 
-    // Create notification
-    const { data: notif, error: notifError } = await supabase
-      .from('notifications')
-      .insert({
-        title: 'Nouveau message',
-        message: message.length > 100 ? message.substring(0, 100) + '...' : message,
-        type: 'info',
-        action_url: `/user/chats?orderId=${order_id}`,
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        created_by: user_id
-      })
-      .select()
-      .single();
+    // Send notification to ALL admins
+    if (adminIds.length > 0) {
+      for (const adminUser of admins) {
+        // Skip if admin is the one sending the message
+        if (adminUser.id === user_id) continue;
 
-    if (notifError) {
-      console.error('Error creating notification:', notifError);
-      return NextResponse.json({ success: true, message: data });
-    }
+        // Check if admin is active in chat
+        const { data: presence } = await supabase
+          .from('chat_presence')
+          .select('id')
+          .eq('user_id', adminUser.id)
+          .eq('order_id', order_id)
+          .eq('is_active', true)
+          .single();
 
-    // Create target
-    await supabase
-      .from('notification_targets')
-      .insert({
-        notification_id: notif.id,
-        target_type: 'user',
-        target_value: recipient_id.toString()
-      });
+        if (presence) {
+          // Admin is active, no notification needed
+          continue;
+        }
 
-    // Send FCM push
-    const { data: devices } = await supabase
-      .from('user_devices')
-      .select('device_token, platform')
-      .eq('user_id', recipient_id)
-      .eq('is_active', true);
+        // Create notification for admin
+        const { data: notif, error: notifError } = await supabase
+          .from('notifications')
+          .insert({
+            title: '💬 Réponse client',
+            message: `${senderName}: ${message.length > 100 ? message.substring(0, 100) + '...' : message}`,
+            type: 'info',
+            action_url: `/admin/dashboard/chats?orderId=${order_id}`,
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+            created_by: user_id
+          })
+          .select()
+          .single();
 
-    if (devices && devices.length > 0) {
-      // Send to FCM using Firebase Admin
-      for (const device of devices) {
-        try {
-          const fcmMessage = {
-            token: device.device_token,
-            notification: {
-              title: `Commande #${order_id}`,
-              body: `Nouveau message`,
-            },
-            webpush: {
-              notification: {
-                title: `Commande #${order_id}`,
-                body: `Nouveau message`,
-                icon: '/logo.png',
-                badge: '/logo.png',
+        if (notifError) {
+          console.error('Error creating admin notification:', notifError);
+          continue;
+        }
+
+        // Create target
+        await supabase
+          .from('notification_targets')
+          .insert({
+            notification_id: notif.id,
+            target_type: 'user',
+            target_value: adminUser.id.toString()
+          });
+
+        // Send FCM push to admin
+        const { data: devices } = await supabase
+          .from('user_devices')
+          .select('device_token, platform')
+          .eq('user_id', adminUser.id)
+          .eq('is_active', true);
+
+        if (devices && devices.length > 0) {
+          for (const device of devices) {
+            try {
+              const fcmMessage = {
+                token: device.device_token,
+                notification: {
+                  title: `💬 Réponse - Commande #${order_id}`,
+                  body: `${senderName} a répondu`,
+                },
+                webpush: {
+                  notification: {
+                    title: `💬 Réponse - Commande #${order_id}`,
+                    body: `${senderName} a répondu`,
+                    icon: '/logo.png',
+                    badge: '/logo.png',
+                    data: {
+                      order_id: order_id.toString(),
+                      type: 'chat_reply',
+                      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/chats?orderId=${order_id}`
+                    },
+                    actions: [
+                      { action: 'open', title: 'Ouvrir' }
+                    ]
+                  },
+                  fcmOptions: {
+                    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/chats?orderId=${order_id}`
+                  }
+                },
                 data: {
                   order_id: order_id.toString(),
-                  type: 'chat',
-                  url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
-                },
-                actions: [
-                  {
-                    action: 'open',
-                    title: 'Ouvrir'
-                  }
-                ]
-              },
-              fcmOptions: {
-                link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
-              }
-            },
-            data: {
-              order_id: order_id.toString(),
-              type: 'chat',
-              click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
+                  type: 'chat_reply',
+                  click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/admin/dashboard/chats?orderId=${order_id}`
+                }
+              };
+
+              await admin.messaging().send(fcmMessage);
+
+              // Log success
+              await supabase
+                .from('notification_logs')
+                .insert({
+                  notification_id: notif.id,
+                  user_id: adminUser.id,
+                  device_token: device.device_token,
+                  platform: device.platform,
+                  status: 'sent'
+                });
+
+            } catch (fcmError: any) {
+              console.error('FCM error for admin:', fcmError);
+              await supabase
+                .from('notification_logs')
+                .insert({
+                  notification_id: notif.id,
+                  user_id: adminUser.id,
+                  device_token: device.device_token,
+                  platform: device.platform,
+                  status: 'failed',
+                  error_message: fcmError.message || 'FCM send failed'
+                });
             }
-          };
+          }
+        }
+      }
+    }
 
-          await admin.messaging().send(fcmMessage);
+    // Also notify the recipient (user or vendor) if they're not active
+    const recipient_id = user_id === order.utilisateur_id ? order.vendeur_id : order.utilisateur_id;
+    
+    if (recipient_id && !adminIds.includes(recipient_id)) {
+      // Check if recipient is active in chat
+      const { data: presence } = await supabase
+        .from('chat_presence')
+        .select('id')
+        .eq('user_id', recipient_id)
+        .eq('order_id', order_id)
+        .eq('is_active', true)
+        .single();
 
-          // Log success
+      if (!presence) {
+        // Create notification for recipient
+        const { data: notif, error: notifError } = await supabase
+          .from('notifications')
+          .insert({
+            title: 'Nouveau message',
+            message: message.length > 100 ? message.substring(0, 100) + '...' : message,
+            type: 'info',
+            action_url: `/user/chats?orderId=${order_id}`,
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+            created_by: user_id
+          })
+          .select()
+          .single();
+
+        if (!notifError) {
+          // Create target
           await supabase
-            .from('notification_logs')
+            .from('notification_targets')
             .insert({
               notification_id: notif.id,
-              user_id: recipient_id,
-              device_token: device.device_token,
-              platform: device.platform,
-              status: 'sent'
+              target_type: 'user',
+              target_value: recipient_id.toString()
             });
 
-        } catch (fcmError: any) {
-          console.error('FCM error:', fcmError);
-          await supabase
-            .from('notification_logs')
-            .insert({
-              notification_id: notif.id,
-              user_id: recipient_id,
-              device_token: device.device_token,
-              platform: device.platform,
-              status: 'failed',
-              error_message: fcmError.message || 'FCM send failed'
-            });
+          // Send FCM push
+          const { data: devices } = await supabase
+            .from('user_devices')
+            .select('device_token, platform')
+            .eq('user_id', recipient_id)
+            .eq('is_active', true);
+
+          if (devices && devices.length > 0) {
+            for (const device of devices) {
+              try {
+                const fcmMessage = {
+                  token: device.device_token,
+                  notification: {
+                    title: `Commande #${order_id}`,
+                    body: `Nouveau message`,
+                  },
+                  webpush: {
+                    notification: {
+                      title: `Commande #${order_id}`,
+                      body: `Nouveau message`,
+                      icon: '/logo.png',
+                      badge: '/logo.png',
+                      data: {
+                        order_id: order_id.toString(),
+                        type: 'chat',
+                        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
+                      },
+                      actions: [
+                        { action: 'open', title: 'Ouvrir' }
+                      ]
+                    },
+                    fcmOptions: {
+                      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
+                    }
+                  },
+                  data: {
+                    order_id: order_id.toString(),
+                    type: 'chat',
+                    click_action: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shopuff.vercel.app'}/user/chats?orderId=${order_id}`
+                  }
+                };
+
+                await admin.messaging().send(fcmMessage);
+
+                // Log success
+                await supabase
+                  .from('notification_logs')
+                  .insert({
+                    notification_id: notif.id,
+                    user_id: recipient_id,
+                    device_token: device.device_token,
+                    platform: device.platform,
+                    status: 'sent'
+                  });
+
+              } catch (fcmError: any) {
+                console.error('FCM error:', fcmError);
+                await supabase
+                  .from('notification_logs')
+                  .insert({
+                    notification_id: notif.id,
+                    user_id: recipient_id,
+                    device_token: device.device_token,
+                    platform: device.platform,
+                    status: 'failed',
+                    error_message: fcmError.message || 'FCM send failed'
+                  });
+              }
+            }
+          }
         }
       }
     }
