@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { onMessageListener, requestFCMToken } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
 
-export default function FirebaseInit() {
+function FirebaseInitContent() {
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -107,4 +107,12 @@ export default function FirebaseInit() {
   }, [user?.id, router, handleSWMessage]);
 
   return null;
+}
+
+export default function FirebaseInit() {
+  return (
+    <Suspense fallback={null}>
+      <FirebaseInitContent />
+    </Suspense>
+  );
 }

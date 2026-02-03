@@ -1,0 +1,68 @@
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Message } from '@/services/chatApi';
+import { playNotificationSound } from '@/services/chatAudio';
+
+interface UseChatRealtimeProps {
+  orderId: number;
+  userId?: number;
+  onNewMessage: (message: Message) => void;
+}
+
+export function useChatRealtime({
+  orderId,
+  userId,
+  onNewMessage
+}: UseChatRealtimeProps) {
+  const [isConnected, setIsConnected] = useState(true);
+  const channelRef = useRef<any>(null);
+  const sentMessagesRef = useRef<Set<string>>(new Set());
+
+  const handleNewMessage = useCallback((payload: { new: Message }) => {
+    const newMsg = payload.new;
+
+    // Deduplication: skip if we already have this message
+    if (sentMessagesRef.current.has(`msg_${newMsg.id}`)) {
+      return;
+    }
+
+    // Check for duplicate by content and time window
+    // The deduplication is handled by the parent component
+
+    // Update status to delivered
+    const deliveredMsg = { ...newMsg, status: 'delivered' as const };
+    onNewMessage(deliveredMsg);
+
+    // Play sound for messages from others
+    if (newMsg.users && newMsg.users.id !== userId) {
+      playNotificationSound();
+    }
+  }, [userId, onNewMessage]);
+
+  useEffect(() => {
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`messages:${orderId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `order_id=eq.${orderId}`
+      }, handleNewMessage)
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId, userId, handleNewMessage]);
+
+  const markMessageAsReceived = useCallback((messageId: string) => {
+    sentMessagesRef.current.add(`msg_${messageId}`);
+  }, []);
+
+  return { isConnected, markMessageAsReceived };
+}
