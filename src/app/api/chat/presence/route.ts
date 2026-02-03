@@ -3,13 +3,17 @@ import { getSupabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabase();
-    const { user_id, order_id, is_active } = await request.json();
+    const body = await request.json();
+    const { user_id, order_id, is_active } = body;
+
+    console.log('[Presence] Received request:', { user_id, order_id, is_active });
 
     if (!user_id || !order_id) {
-      return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
+      console.error('[Presence] Missing required fields:', { user_id, order_id });
+      return NextResponse.json({ error: 'Données invalides', received: { user_id, order_id } }, { status: 400 });
     }
 
+    const supabase = await getSupabase();
     const { error } = await supabase
       .from('chat_presence')
       .upsert({
@@ -20,13 +24,14 @@ export async function POST(request: NextRequest) {
       }, { onConflict: 'user_id,order_id' });
 
     if (error) {
-      console.error('Error updating presence:', error);
-      return NextResponse.json({ error: 'Erreur mise à jour présence' }, { status: 500 });
+      console.error('[Presence] Supabase error:', error);
+      return NextResponse.json({ error: 'Erreur mise à jour présence', details: error.message }, { status: 500 });
     }
 
+    console.log('[Presence] Updated successfully for user:', user_id, 'order:', order_id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating presence:', error);
+    console.error('[Presence] Server error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
