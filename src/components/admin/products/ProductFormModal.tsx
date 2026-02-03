@@ -93,9 +93,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-black/70 via-slate-900/70 to-purple-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-      <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300 border border-purple-500/20">
+      <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300 border border-purple-500/20">
         {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-700 p-6 text-white">
+        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-700 p-6 text-white flex-shrink-0">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -116,8 +116,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
         </div>
 
-        {/* Form Content */}
-        <div className="p-6 bg-gradient-to-b from-slate-800/50 to-slate-900/50">
+        {/* Form Content - Scrollable */}
+        <div className="p-6 bg-gradient-to-b from-slate-800/50 to-slate-900/50 overflow-y-auto flex-1">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Product Name */}
             <div className="space-y-2">
@@ -261,7 +261,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-6 border-t border-slate-600">
+            <div className="flex gap-3 pt-6 border-t border-slate-600 flex-shrink-0">
               <button
                 type="button"
                 onClick={onClose}
