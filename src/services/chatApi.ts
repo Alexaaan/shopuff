@@ -1,19 +1,6 @@
-// Message types
-export interface Message {
-  id: number;
-  client_id?: string;
-  message: string;
-  created_at: string;
-  user_id: number;
-  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
-  users: {
-    id: number;
-    nom: string;
-    prenom: string;
-  };
-}
+// Chat API functions
+import { Message } from '@/types/chat';
 
-// API functions
 export async function fetchMessages(orderId: number): Promise<Message[]> {
   const response = await fetch(`/api/messages?orderId=${orderId}`);
   if (!response.ok) {
@@ -40,11 +27,11 @@ export async function sendMessage(params: {
       client_id: params.clientId
     })
   });
-  
+
   if (!response.ok) {
     throw new Error('Failed to send message');
   }
-  
+
   return response.json();
 }
 
@@ -77,7 +64,7 @@ export async function cancelOrder(orderId: number): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: orderId, statut: 'annulee' })
   });
-  
+
   if (!response.ok) {
     throw new Error('Failed to cancel order');
   }

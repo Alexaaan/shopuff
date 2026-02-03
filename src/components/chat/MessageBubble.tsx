@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, CheckCheck, AlertCircle, Loader2 } from 'lucide-react';
-import { Message } from '@/services/chatApi';
+import { Message } from '@/types/chat';
 
 interface MessageBubbleProps {
   msg: Message;

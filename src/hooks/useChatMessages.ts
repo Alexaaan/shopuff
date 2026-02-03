@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Message, fetchMessages, sendMessage, markMessagesAsRead } from '@/services/chatApi';
+import { Message } from '@/types/chat';
+import { fetchMessages, sendMessage, markMessagesAsRead } from '@/services/chatApi';
 import { generateClientId } from '@/services/chatClientId';
 
 interface UseChatMessagesProps {

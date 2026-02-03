@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { Message } from '@/services/chatApi';
+import { Message } from '@/types/chat';
 import { MessageBubble } from './MessageBubble';
 import { isUserMessage } from '@/hooks/useChatMessages';
 

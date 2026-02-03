@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Message } from '@/services/chatApi';
+import { Message } from '@/types/chat';
 import { playNotificationSound } from '@/services/chatAudio';
 
 interface UseChatRealtimeProps {

@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { Message } from '@/services/chatApi';
+import { Message } from '@/types/chat';
 import { playNotificationSound } from '@/services/chatAudio';
 
 interface UseChatNotificationsProps {
@@ -25,3 +25,6 @@ export function useChatNotifications({ onRefresh }: UseChatNotificationsProps) {
     };
   }, [handleFCMMessage]);
 }
+
+// Re-export for backward compatibility
+export type { Message };
