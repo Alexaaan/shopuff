@@ -26,12 +26,8 @@ export function useChatRealtime({
       return;
     }
 
-    // Check for duplicate by content and time window
-    // The deduplication is handled by the parent component
-
-    // Update status to delivered
-    const deliveredMsg = { ...newMsg, status: 'delivered' as const };
-    onNewMessage(deliveredMsg);
+    // Call the callback with the message
+    onNewMessage({ ...newMsg, status: 'delivered' as const });
 
     // Play sound for messages from others
     if (newMsg.users && newMsg.users.id !== userId) {
@@ -58,7 +54,7 @@ export function useChatRealtime({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [orderId, userId, handleNewMessage]);
+  }, [orderId, handleNewMessage]);
 
   const markMessageAsReceived = useCallback((messageId: string) => {
     sentMessagesRef.current.add(`msg_${messageId}`);

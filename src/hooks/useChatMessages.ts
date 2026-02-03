@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Message, fetchMessages, sendMessage, markMessagesAsRead } from '@/services/chatApi';
 import { generateClientId } from '@/services/chatClientId';
 
@@ -6,6 +6,7 @@ interface UseChatMessagesProps {
   orderId: number;
   userId?: number;
   orderUserId?: number;
+  onRealtimeMessage?: (message: Message) => void;
 }
 
 interface UseChatMessagesReturn {
@@ -15,12 +16,14 @@ interface UseChatMessagesReturn {
   sendMessage: (text: string) => Promise<void>;
   retryMessage: (clientId: string, text: string) => void;
   markAsRead: () => Promise<void>;
+  addRealtimeMessage: (message: Message) => void;
 }
 
 export function useChatMessages({
   orderId,
   userId,
-  orderUserId
+  orderUserId,
+  onRealtimeMessage
 }: UseChatMessagesProps): UseChatMessagesReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,9 +43,9 @@ export function useChatMessages({
   }, [orderId]);
 
   // Initial fetch
-  useState(() => {
+  useEffect(() => {
     fetch();
-  });
+  }, [fetch]);
 
   // Mark as read
   const markAsRead = useCallback(async () => {
@@ -74,7 +77,6 @@ export function useChatMessages({
 
     setSending(true);
     setMessages(prev => [...prev, optimisticMessage]);
-    setMessages(prev => prev.filter(m => m.client_id !== clientId)); // Clear optimistic from input
 
     try {
       const result = await sendMessage({
@@ -106,13 +108,35 @@ export function useChatMessages({
     // Re-add to input - caller handles this
   }, []);
 
+  // Add realtime message with deduplication
+  const addRealtimeMessage = useCallback((newMsg: Message) => {
+    setMessages(prev => {
+      // Check for duplicate by content and time window
+      const isDuplicate = prev.some(m =>
+        m.message === newMsg.message &&
+        m.user_id === newMsg.user_id &&
+        Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 2000
+      );
+
+      if (isDuplicate) return prev;
+
+      return [...prev, { ...newMsg, status: 'delivered' as const }];
+    });
+
+    // Call optional callback for side effects (like sound)
+    if (onRealtimeMessage) {
+      onRealtimeMessage(newMsg);
+    }
+  }, [onRealtimeMessage]);
+
   return {
     messages,
     loading,
     sending,
     sendMessage: sendMessageFn,
     retryMessage,
-    markAsRead
+    markAsRead,
+    addRealtimeMessage
   };
 }
 

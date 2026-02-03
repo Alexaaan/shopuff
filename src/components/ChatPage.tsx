@@ -11,6 +11,7 @@ import { useChatPresence } from '@/hooks/useChatPresence';
 import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { useChatScroll } from '@/hooks/useChatScroll';
 import { cancelOrder } from '@/services/chatApi';
+import { playNotificationSound } from '@/services/chatAudio';
 
 export interface ChatPageProps {
   orderId: number;
@@ -35,11 +36,19 @@ export default function ChatPage({ orderId, onClose, orderUserId }: ChatPageProp
   const [newMessage, setNewMessage] = useState('');
   const [retryData, setRetryData] = useState<{ clientId: string; text: string } | null>(null);
 
+  // Handle realtime message with sound for others
+  const handleRealtimeMessage = useCallback((msg: any) => {
+    if (msg.users && msg.users.id !== user?.id) {
+      playNotificationSound();
+    }
+  }, [user?.id]);
+
   // Hooks
-  const { messages, loading, sending, sendMessage, retryMessage, markAsRead } = useChatMessages({
+  const { messages, loading, sending, sendMessage, retryMessage, markAsRead, addRealtimeMessage } = useChatMessages({
     orderId,
     userId: user?.id,
-    orderUserId
+    orderUserId,
+    onRealtimeMessage: handleRealtimeMessage
   });
 
   const { messagesEndRef, scrollToBottom } = useChatScroll({
@@ -50,16 +59,7 @@ export default function ChatPage({ orderId, onClose, orderUserId }: ChatPageProp
   const { isConnected } = useChatRealtime({
     orderId,
     userId: user?.id,
-    onNewMessage: (msg) => {
-      const isDuplicate = messages.some(m =>
-        m.message === msg.message &&
-        m.user_id === msg.user_id &&
-        Math.abs(new Date(m.created_at).getTime() - new Date(msg.created_at).getTime()) < 2000
-      );
-      if (!isDuplicate) {
-        messages.push(msg);
-      }
-    }
+    onNewMessage: addRealtimeMessage
   });
 
   useChatPresence({ userId: user?.id, orderId, isActive: true });
