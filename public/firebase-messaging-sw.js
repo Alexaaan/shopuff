@@ -1,5 +1,5 @@
-// Firebase Messaging Service Worker - v2.0
-// Centralizes ALL notification logic with deduplication
+// Firebase Messaging Service Worker - v2.1
+// Fixed: Single notification, no duplicates
 
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
@@ -77,7 +77,7 @@ function getNotificationTag(data) {
   return 'default';
 }
 
-// Handle background messages
+// Handle background messages - ONLY handler for notifications
 messaging.onBackgroundMessage((payload) => {
   console.log('[SW] Received background message:', payload.notification?.title);
   
@@ -90,7 +90,7 @@ messaging.onBackgroundMessage((payload) => {
   // Check if we already displayed this notification
   const now = Date.now();
   const lastDisplay = displayedNotifications.get(tag);
-  if (lastDisplay && (now - lastDisplay) < 2000) {
+  if (lastDisplay && (now - lastDisplay) < 5000) {
     console.log('[SW] Notification already displayed recently, skipping:', tag);
     return;
   }
@@ -112,15 +112,14 @@ messaging.onBackgroundMessage((payload) => {
       received_at: now.toString()
     },
     actions: [
-      { action: 'open', title: '🗨️ Ouvrir' },
-      { action: 'dismiss', title: 'Fermer' }
+      { action: 'open', title: '🗨️ Ouvrir' }
     ],
     requireInteraction: type === 'new_order',
     silent: false,
     vibrate: [200, 100, 200]
   };
   
-  // Show notification
+  // Show notification - single notification only
   self.registration.showNotification(title, notificationOptions)
     .then(() => {
       displayedNotifications.set(tag, now);
@@ -131,9 +130,12 @@ messaging.onBackgroundMessage((payload) => {
     });
 });
 
-// Single notification click handler
+// Single notification click handler - FIXED to prevent duplicate navigation
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification click:', event.action);
+  
+  // Prevent duplicate clicks
+  if (event.isTrusted === false) return;
   
   // Close the notification
   event.notification.close();
@@ -146,48 +148,27 @@ self.addEventListener('notificationclick', (event) => {
   const data = event.notification.data || {};
   const targetUrl = getTargetUrl(data);
   
-  // Focus existing window or open new one
+  console.log('[SW] Navigating to:', targetUrl);
+  
+  // Focus existing window or open new one - SINGLE navigation only
   event.waitUntil(
     clients.matchAll({ 
       type: 'window', 
       includeUncontrolled: true 
     })
     .then((windowClients) => {
-      // Try to focus existing window with same URL
+      // Try to focus existing window
       for (let client of windowClients) {
-        // Check if this is our app and already has the target path
-        if (client.url.includes('/admin/') && targetUrl.includes('/admin/')) {
-          if ('focus' in client) {
-            // Navigate to the specific chat/order
-            client.postMessage({
-              type: 'NAVIGATE_TO',
-              url: targetUrl
-            });
-            return client.focus();
-          }
-        }
-        if (client.url.includes('/user/') && targetUrl.includes('/user/')) {
-          if ('focus' in client) {
-            client.postMessage({
-              type: 'NAVIGATE_TO',
-              url: targetUrl
-            });
-            return client.focus();
-          }
+        if (client.url.includes(targetUrl) && 'focus' in client) {
+          return client.focus();
         }
       }
       
-      // No matching window, open new one
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
+      // No matching window, open new one - SINGLE attempt
+      return clients.openWindow(targetUrl);
     })
     .catch(err => {
-      console.error('[SW] Error handling notification click:', err);
-      // Fallback: open URL directly
-      if (clients.openWindow) {
-        clients.openWindow(targetUrl);
-      }
+      console.error('[SW] Error:', err);
     })
   );
 });
@@ -195,20 +176,6 @@ self.addEventListener('notificationclick', (event) => {
 // Handle notification close
 self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification closed:', event.notification.tag);
-});
-
-// Handle push event directly (fallback)
-self.addEventListener('push', (event) => {
-  console.log('[SW] Push event received');
-  
-  if (!event.data) return;
-  
-  try {
-    const payload = event.data.json();
-    console.log('[SW] Push payload:', payload);
-  } catch (err) {
-    console.error('[SW] Error parsing push payload:', err);
-  }
 });
 
 // Message handler for communication with main app
@@ -236,6 +203,6 @@ self.addEventListener('install', (event) => {
 
 // Activate handler
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Service Worker activated');
+  console.log('[SW] Service Worker activated - v2.1');
   event.waitUntil(clients.claim());
 });
