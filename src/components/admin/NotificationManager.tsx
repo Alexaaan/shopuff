@@ -36,15 +36,27 @@ function NotificationManager({ className }: NotificationManagerProps) {
   });
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<any>(null);
+  
+  // Users list for dropdown
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  // Charger les données selon l'onglet actif
-  useEffect(() => {
-    if (activeTab === 'history') {
-      loadLogs();
-    } else if (activeTab === 'delivery') {
-      loadDeliveryLogs();
+  // Charger les utilisateurs
+  const loadUsers = useCallback(async () => {
+    try {
+      setLoadingUsers(true);
+      const response = await fetch('/api/users');
+      if (!response.ok) throw new Error('Erreur chargement utilisateurs');
+      const data = await response.json();
+      setUsers(data || []);
+    } catch (err) {
+      console.error('Erreur chargement utilisateurs:', err);
+    } finally {
+      setLoadingUsers(false);
     }
-  }, [activeTab, loadLogs]);
+  }, []);
 
   const loadDeliveryLogs = useCallback(async () => {
     try {
@@ -60,6 +72,17 @@ function NotificationManager({ className }: NotificationManagerProps) {
       setLoadingDelivery(false);
     }
   }, []);
+
+  // Charger les données selon l'onglet actif
+  useEffect(() => {
+    if (activeTab === 'history') {
+      loadLogs();
+    } else if (activeTab === 'delivery') {
+      loadDeliveryLogs();
+    } else if (activeTab === 'send') {
+      loadUsers();
+    }
+  }, [activeTab, loadLogs, loadDeliveryLogs, loadUsers]);
 
   const handleSendNotification = useCallback(async () => {
     if (!notificationForm.title || !notificationForm.message) {
@@ -92,6 +115,23 @@ function NotificationManager({ className }: NotificationManagerProps) {
   const handleSettingChange = useCallback(async (key: string, value: boolean) => {
     await updateSettings({ [key]: value.toString() });
   }, [updateSettings]);
+
+  // Filtrer les utilisateurs selon la recherche
+  const filteredUsers = useMemo(() => {
+    if (!userSearch) return users;
+    const search = userSearch.toLowerCase();
+    return users.filter(u => 
+      u.nom?.toLowerCase().includes(search) ||
+      u.prenom?.toLowerCase().includes(search) ||
+      u.email?.toLowerCase().includes(search) ||
+      u.id?.toString().includes(search)
+    );
+  }, [users, userSearch]);
+
+  // Obtenir l'utilisateur sélectionné
+  const selectedUser = useMemo(() => {
+    return users.find(u => u.id.toString() === notificationForm.targetValue);
+  }, [users, notificationForm.targetValue]);
 
 
 
@@ -282,16 +322,100 @@ function NotificationManager({ className }: NotificationManagerProps) {
 
               {(notificationForm.target === 'role' || notificationForm.target === 'user') && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    {notificationForm.target === 'role' ? 'Rôle' : 'ID Utilisateur'}
-                  </label>
-                  <input
-                    type="text"
-                    className="admin-form-input"
-                    value={notificationForm.targetValue}
-                    onChange={(e) => setNotificationForm(prev => ({ ...prev, targetValue: e.target.value }))}
-                    placeholder={notificationForm.target === 'role' ? 'admin/user' : 'ID utilisateur'}
-                  />
+                  {notificationForm.target === 'role' ? (
+                    <>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">Rôle</label>
+                      <select
+                        className="admin-form-input"
+                        value={notificationForm.targetValue}
+                        onChange={(e) => setNotificationForm(prev => ({ ...prev, targetValue: e.target.value }))}
+                      >
+                        <option value="">Sélectionner un rôle</option>
+                        <option value="admin">Administrateur</option>
+                        <option value="user">Utilisateur</option>
+                        <option value="vendeur">Vendeur</option>
+                      </select>
+                    </>
+                  ) : (
+                    <>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">Utilisateur</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          value={userSearch}
+                          onChange={(e) => {
+                            setUserSearch(e.target.value);
+                            setShowUserDropdown(true);
+                          }}
+                          onFocus={() => setShowUserDropdown(true)}
+                          onBlur={() => setTimeout(() => setShowUserDropdown(false), 200)}
+                          placeholder="Rechercher un utilisateur..."
+                        />
+                        {/* Selected user display */}
+                        {selectedUser && (
+                          <div className="mt-2 p-3 bg-slate-700/50 rounded-lg border border-slate-600/50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-medium">
+                                  {selectedUser.prenom?.[0]}{selectedUser.nom?.[0]}
+                                </div>
+                                <div>
+                                  <div className="text-white font-medium">{selectedUser.prenom} {selectedUser.nom}</div>
+                                  <div className="text-slate-400 text-sm">{selectedUser.email}</div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setNotificationForm(prev => ({ ...prev, targetValue: '' }));
+                                  setUserSearch('');
+                                }}
+                                className="text-slate-400 hover:text-red-400 transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {/* Dropdown */}
+                        {showUserDropdown && !selectedUser && (
+                          <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-600/50 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                            {loadingUsers ? (
+                              <div className="p-3 text-center text-slate-400">
+                                <div className="inline-block w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Chargement...
+                              </div>
+                            ) : filteredUsers.length === 0 ? (
+                              <div className="p-3 text-center text-slate-400">
+                                Aucun utilisateur trouvé
+                              </div>
+                            ) : (
+                              filteredUsers.slice(0, 10).map((user) => (
+                                <div
+                                  key={user.id}
+                                  className="p-3 hover:bg-slate-700/50 cursor-pointer transition-colors flex items-center gap-3"
+                                  onClick={() => {
+                                    setNotificationForm(prev => ({ ...prev, targetValue: user.id.toString() }));
+                                    setUserSearch(`${user.prenom} ${user.nom}`);
+                                    setShowUserDropdown(false);
+                                  }}
+                                >
+                                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                                    {user.prenom?.[0]}{user.nom?.[0]}
+                                  </div>
+                                  <div>
+                                    <div className="text-white text-sm">{user.prenom} {user.nom}</div>
+                                    <div className="text-slate-400 text-xs">{user.email}</div>
+                                  </div>
+                                  <div className="ml-auto text-slate-500 text-xs">#{user.id}</div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
