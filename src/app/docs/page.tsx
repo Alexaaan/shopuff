@@ -6,11 +6,12 @@ import { useEffect, useState } from 'react';
  * API Documentation Page with Redoc
  * 
  * Displays beautiful API documentation using Redoc.
- * Redoc is a pure React alternative to Swagger UI without deprecated warnings.
+ * Redoc is a pure JS alternative to Swagger UI without React warnings.
  */
 export default function DocsPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [containerId] = useState('redoc-container');
 
   useEffect(() => {
     loadRedoc();
@@ -18,74 +19,69 @@ export default function DocsPage() {
 
   const loadRedoc = () => {
     try {
+      // Check if already loaded
+      // @ts-ignore - Redoc is loaded globally
+      if (window.Redoc) {
+        initRedoc();
+        return;
+      }
+      
       // Load Redoc script dynamically
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js';
       script.async = true;
-      script.onload = () => {
-        // @ts-ignore - Redoc is loaded globally
-        if (window.Redoc) {
-          // @ts-ignore
-          window.Redoc.init(
-            `${window.location.origin}/api/docs`,
-            {
-              theme: {
-                colors: {
-                  primary: {
-                    main: '#667eea'
-                  }
-                },
-                typography: {
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  headings: {
-                    fontWeight: '600'
-                  }
-                },
-                sidebar: {
-                  backgroundColor: '#1e293b',
-                  textColor: '#e2e8f0'
-                },
-                rightPanel: {
-                  backgroundColor: '#0f172a',
-                  textColor: '#e2e8f0'
-                }
-              },
-              scrollYOffset: 64,
-              hideDownloadButton: false,
-              showApiVersion: true,
-              docExpansion: 'list',
-              filterProp: 'name'
-            },
-            document.getElementById('redoc-container')
-          );
-          setIsLoaded(true);
-        }
-      };
-      script.onerror = () => {
-        setError('Failed to load Redoc library');
-      };
+      script.onload = () => initRedoc();
+      script.onerror = () => setError('Failed to load Redoc library');
       document.head.appendChild(script);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
   };
 
+  const initRedoc = () => {
+    // @ts-ignore - Redoc is loaded globally
+    if (window.Redoc) {
+      // @ts-ignore
+      window.Redoc.init(
+        `${window.location.origin}/api/docs`,
+        {
+          theme: {
+            colors: {
+              primary: { main: '#667eea' }
+            },
+            typography: {
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              headings: { fontWeight: '600' }
+            },
+            sidebar: {
+              backgroundColor: '#1e293b',
+              textColor: '#e2e8f0'
+            },
+            rightPanel: {
+              backgroundColor: '#0f172a',
+              textColor: '#e2e8f0'
+            }
+          },
+          scrollYOffset: 64,
+          hideDownloadButton: false,
+          showApiVersion: true,
+          docExpansion: 'list'
+        },
+        document.getElementById(containerId)
+      );
+      setIsLoaded(true);
+    }
+  };
+
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      background: '#0f172a'
-    }}>
-      {/* Redoc Container */}
-      <div id="redoc-container" style={{ minHeight: '100vh' }} />
+    <div style={{ minHeight: '100vh', background: '#0f172a' }}>
+      <div id={containerId} style={{ minHeight: '100vh' }} />
       
       {/* Loading Overlay */}
       {!isLoaded && !error && (
         <div style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          inset: 0,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -110,10 +106,7 @@ export default function DocsPage() {
       {error && (
         <div style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          inset: 0,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -124,10 +117,7 @@ export default function DocsPage() {
           padding: '24px',
           textAlign: 'center'
         }}>
-          <div style={{
-            fontSize: '48px',
-            marginBottom: '16px'
-          }}>⚠️</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
           <h2 style={{ marginBottom: '8px' }}>Error Loading Documentation</h2>
           <p style={{ color: '#94a3b8', marginBottom: '24px' }}>{error}</p>
           <button 
@@ -147,7 +137,6 @@ export default function DocsPage() {
         </div>
       )}
 
-      {/* Custom Styles */}
       <style jsx global>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
@@ -195,25 +184,11 @@ export default function DocsPage() {
           background: rgba(102, 126, 234, 0.1) !important;
         }
         
-        .badge-get {
-          background: #3b82f6 !important;
-        }
-        
-        .badge-post {
-          background: #22c55e !important;
-        }
-        
-        .badge-put {
-          background: #f59e0b !important;
-        }
-        
-        .badge-delete {
-          background: #ef4444 !important;
-        }
-        
-        .badge-patch {
-          background: #8b5cf6 !important;
-        }
+        .badge-get { background: #3b82f6 !important; }
+        .badge-post { background: #22c55e !important; }
+        .badge-put { background: #f59e0b !important; }
+        .badge-delete { background: #ef4444 !important; }
+        .badge-patch { background: #8b5cf6 !important; }
         
         code {
           background: #1e293b !important;
