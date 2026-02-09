@@ -3,6 +3,24 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 
+interface DeliveryLogUser {
+  nom: string;
+  prenom: string;
+}
+
+interface DeliveryLog {
+  id: number;
+  notification_id: number;
+  user_id: number;
+  device_token: string;
+  platform: string;
+  status: string;
+  error_message: string | null;
+  sent_at: string;
+  opened_at: string | null;
+  users: DeliveryLogUser | null;
+}
+
 interface NotificationManagerProps {
   className?: string;
 }
@@ -23,7 +41,7 @@ function NotificationManager({ className }: NotificationManagerProps) {
   } = useNotifications();
 
   const [activeTab, setActiveTab] = useState<'send' | 'history' | 'settings' | 'stats' | 'delivery'>('stats');
-  const [deliveryLogs, setDeliveryLogs] = useState<any[]>([]);
+  const [deliveryLogs, setDeliveryLogs] = useState<DeliveryLog[]>([]);
   const [deliveryStats, setDeliveryStats] = useState<any>(null);
   const [loadingDelivery, setLoadingDelivery] = useState(false);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);

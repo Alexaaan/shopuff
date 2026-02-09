@@ -26,16 +26,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = (page - 1) * limit;
 
-    console.log('🔍 Fetching delivery logs from notification_logs table...');
-
-    // D'abord, testons une requête simple pour voir si la table est accessible
-    const { data: testData, error: testError } = await supabase
+    // Test if table is accessible
+    const { error: testError } = await supabase
       .from('notification_logs')
       .select('id')
       .limit(1);
 
     if (testError) {
-      console.error('❌ Table notification_logs not accessible:', testError);
       return NextResponse.json({
         error: 'Table notification_logs inaccessible',
         details: testError.message,
@@ -45,48 +42,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log('✅ Table accessible, fetching delivery logs...');
-
-    // Récupérer les logs détaillés de livraison des notifications
-    // Note: Using inner join to get user info since FK might not exist
+    // Fetch delivery logs
     const { data: deliveryLogs, error, count } = await supabase
       .from('notification_logs')
-      .select(`
-        id,
-        notification_id,
-        user_id,
-        device_token,
-        platform,
-        status,
-        error_message,
-        sent_at,
-        opened_at
-      `, { count: 'exact' })
+      .select('id,notification_id,user_id,device_token,platform,status,error_message,sent_at,opened_at')
       .order('sent_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    // Fetch user info separately for each log
-    if (deliveryLogs && deliveryLogs.length > 0) {
-      const userIds = [...new Set(deliveryLogs.map(log => log.user_id).filter(Boolean))];
-      if (userIds.length > 0) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id, nom, prenom')
-          .in('id', userIds);
-        
-        const userMap = new Map(userData?.map(user => [user.id, user]) || []);
-        
-        // Attach user info to each log
-        deliveryLogs.forEach(log => {
-          if (log.user_id && userMap.has(log.user_id)) {
-            log.users = userMap.get(log.user_id);
-          }
-        });
-      }
-    }
-
     if (error) {
-      console.error('❌ Error fetching delivery logs:', error);
       return NextResponse.json({
         error: 'Erreur récupération logs livraison',
         details: error.message,
@@ -96,19 +59,42 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log(`✅ Found ${deliveryLogs?.length || 0} delivery logs`);
+    // Fetch user info separately
+    const typedLogs = deliveryLogs as DeliveryLog[];
+    if (typedLogs && typedLogs.length > 0) {
+      const userIds = typedLogs.map(log => log.user_id).filter(id => id > 0);
+      if (userIds.length > 0) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id,nom,prenom')
+          .in('id', userIds);
 
-    // Statistiques de livraison
+        const userMap: Record<number, { nom: string; prenom: string }> = {};
+        if (Array.isArray(userData)) {
+          userData.forEach(user => {
+            userMap[user.id] = { nom: user.nom, prenom: user.prenom };
+          });
+        }
+
+        typedLogs.forEach(log => {
+          if (log.user_id && userMap[log.user_id]) {
+            log.users = userMap[log.user_id];
+          }
+        });
+      }
+    }
+
+    // Calculate stats
     const stats = {
       total: count || 0,
-      sent: (deliveryLogs as DeliveryLog[])?.filter((log: DeliveryLog) => log.status === 'sent').length || 0,
-      failed: (deliveryLogs as DeliveryLog[])?.filter((log: DeliveryLog) => log.status === 'failed').length || 0,
-      opened: (deliveryLogs as DeliveryLog[])?.filter((log: DeliveryLog) => log.status === 'opened').length || 0,
-      pending: (deliveryLogs as DeliveryLog[])?.filter((log: DeliveryLog) => log.status === 'pending').length || 0,
+      sent: typedLogs?.filter(log => log.status === 'sent').length || 0,
+      failed: typedLogs?.filter(log => log.status === 'failed').length || 0,
+      opened: typedLogs?.filter(log => log.status === 'opened').length || 0,
+      pending: typedLogs?.filter(log => log.status === 'pending').length || 0,
     };
 
     return NextResponse.json({
-      logs: deliveryLogs,
+      logs: typedLogs,
       stats,
       pagination: {
         page,

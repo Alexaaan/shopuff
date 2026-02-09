@@ -32,8 +32,9 @@ interface NotificationLog {
   devices_failed: number;
   created_at: string;
   users?: {
-    name: string;
-    email: string;
+    nom: string;
+    prenom: string;
+    email?: string;
   };
 }
 

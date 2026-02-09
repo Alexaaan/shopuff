@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build",
-  "devCommand": "npm run dev --turbo",
+  "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["cdg1"],
@@ -16,6 +16,27 @@
         {
           "key": "X-DNS-Prefetch-Control",
           "value": "on"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/sw\\.js$",
+      "headers": [
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
         }
       ]
     }
