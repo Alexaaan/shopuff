@@ -139,7 +139,8 @@ function NotificationManager({ className }: NotificationManagerProps) {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Europe/Paris'
     });
   }, []);
 

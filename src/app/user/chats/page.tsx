@@ -129,7 +129,8 @@ function UserChatsContent() {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
-                            day: 'numeric'
+                            day: 'numeric',
+                            timeZone: 'Europe/Paris'
                           })}
                         </p>
                       </div>

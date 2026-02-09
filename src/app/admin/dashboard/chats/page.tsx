@@ -98,7 +98,7 @@ function AdminChatsContent() {
               <div>
                 <h3 className="text-lg font-semibold text-white">Commande #{order.id} - {order.users.prenom} {order.users.nom}</h3>
                 <p className="text-sm text-slate-400">
-                  {order.debut_commande ? new Date(order.debut_commande).toLocaleDateString() : ''}
+                  {order.debut_commande ? new Date(order.debut_commande).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) : ''}
                 </p>
               </div>
               <span className="text-xl font-bold text-green-400">{order.total}€</span>

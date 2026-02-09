@@ -54,7 +54,11 @@ export async function updatePresence(params: {
   await fetch('/api/chat/presence', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params)
+    body: JSON.stringify({
+      user_id: params.userId,
+      order_id: params.orderId,
+      is_active: params.isActive
+    })
   });
 }
 

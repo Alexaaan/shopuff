@@ -101,7 +101,7 @@ export const OfflineProductsTable: React.FC<OfflineProductsTableProps> = ({
                 <div className="flex items-center gap-3 mt-2">
                   <StatusBadge status={product.status} />
                   <span className="text-xs text-gray-500">
-                    {new Date(product.created_at).toLocaleDateString('fr-FR')}
+                    {new Date(product.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}
                   </span>
                 </div>
               </div>
@@ -256,7 +256,7 @@ export const OfflineProductsTable: React.FC<OfflineProductsTableProps> = ({
                   <StatusBadge status={product.status} />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(product.created_at).toLocaleDateString('fr-FR')}
+                  {new Date(product.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center gap-2">

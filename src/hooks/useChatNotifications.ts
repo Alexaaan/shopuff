@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useCallback } from 'react';
 import { Message } from '@/types/chat';
 import { playNotificationSound } from '@/services/chatAudio';

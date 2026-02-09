@@ -61,7 +61,8 @@ export function MessageBubble({ msg, isUser, onRetry }: MessageBubbleProps) {
           <p className={`text-xs ${isUser ? 'text-purple-200' : 'text-slate-400'}`}>
             {new Date(msg.created_at).toLocaleTimeString('fr-FR', {
               hour: '2-digit',
-              minute: '2-digit'
+              minute: '2-digit',
+              timeZone: 'Europe/Paris'
             })}
           </p>
           {isFailed && (

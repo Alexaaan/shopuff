@@ -141,7 +141,7 @@ export function useChatMessages({
   };
 }
 
-// Helper to check if message is from current user
+// Helper to check if message is from the order user (for alignment)
 export function isUserMessage(msg: Message, orderUserId?: number): boolean {
   return msg.users?.id === orderUserId;
 }

@@ -297,7 +297,8 @@ export default function Orders() {
                     <span className="text-xs text-slate-400">
                       {new Date(order.debut_commande).toLocaleTimeString('fr-FR', {
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        timeZone: 'Europe/Paris'
                       })}
                     </span>
                   </td>

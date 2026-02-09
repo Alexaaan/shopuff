@@ -36,7 +36,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth">
         {messages.map((msg) => (
           <MessageBubble
-            key={msg.id}
+            key={msg.client_id || msg.id}
             msg={msg}
             isUser={isUserMessage(msg, orderUserId)}
             onRetry={() => msg.client_id && onRetry(msg.client_id, msg.message)}
