@@ -169,7 +169,7 @@ function NotificationManager({ className }: NotificationManagerProps) {
     switch (targetType) {
       case 'all': return 'Tous les utilisateurs';
       case 'role': return `Rôle: ${targetValue}`;
-      case 'user': return `Utilisateur ID: ${targetValue}`;
+      case 'user': return `Utilisateur #${targetValue}`;
       default: return targetType;
     }
   }, []);
@@ -499,7 +499,7 @@ function NotificationManager({ className }: NotificationManagerProps) {
                         </span>
                         {log.users && (
                           <span className="flex items-center gap-1">
-                            👤 {log.users.name}
+                            👤 {log.users.prenom} {log.users.nom}
                           </span>
                         )}
                       </div>
@@ -587,7 +587,7 @@ function NotificationManager({ className }: NotificationManagerProps) {
                       {/* User Info */}
                       <div className="text-sm">
                         <div className="text-white font-medium">
-                          {log.users?.name || `User ${log.user_id}`}
+                          {log.users ? `${log.users.prenom} ${log.users.nom}` : `Utilisateur #${log.user_id}`}
                         </div>
                         <div className="text-slate-400">
                           {log.platform} • {formatDate(log.sent_at)}

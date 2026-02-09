@@ -1,8 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { useAuth } from '@/lib/AuthContext';
+import { NotificationBell } from '@/components/notifications';
+
+// Dynamic import for NotificationProvider
+const NotificationProvider = dynamic(
+  () => import('@/lib/NotificationContext').then(mod => mod.NotificationProvider),
+  { ssr: false }
+);
 
 interface HeaderUserChatsProps {
   showBackButton?: boolean;
@@ -14,6 +23,12 @@ export const HeaderUserChats: React.FC<HeaderUserChatsProps> = ({
   onBack
 }) => {
   const router = useRouter();
+  const { user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleBack = () => {
     if (onBack) {
@@ -81,15 +96,21 @@ export const HeaderUserChats: React.FC<HeaderUserChatsProps> = ({
               </div>
             </div>
 
-            {/* Right Section - Status Indicator */}
+            {/* Right Section - Notifications */}
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-              <span className="text-sm text-slate-300 hidden sm:inline">En ligne</span>
+              {mounted && user && (
+                <NotificationProvider userId={user.id}>
+                  <NotificationBell />
+                </NotificationProvider>
+              )}
+              <div className="flex items-center gap-2 ml-2">
+                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+                <span className="text-sm text-slate-300 hidden sm:inline">En ligne</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 };

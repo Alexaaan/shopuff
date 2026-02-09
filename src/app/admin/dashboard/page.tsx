@@ -1,6 +1,25 @@
-import Link from "next/link";
+'use client';
 
-export default function Dashboard() {
+import { useEffect, useState, Suspense } from 'react';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useAuth } from '@/lib/AuthContext';
+import { NotificationBell } from '@/components/notifications';
+
+// Dynamic import for NotificationProvider to avoid SSR issues
+const NotificationProvider = dynamic(
+  () => import('@/lib/NotificationContext').then(mod => mod.NotificationProvider),
+  { ssr: false }
+);
+
+function DashboardContent() {
+  const { user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const menuItems = [
     {
       href: "/admin/dashboard/products",
@@ -8,7 +27,8 @@ export default function Dashboard() {
       title: "Produits",
       description: "Gérer le catalogue",
       color: "from-purple-500 to-pink-500",
-      glow: "shadow-purple-500/25"
+      glow: "shadow-purple-500/25",
+      stat: null
     },
     {
       href: "/admin/dashboard/users",
@@ -16,7 +36,8 @@ export default function Dashboard() {
       title: "Utilisateurs",
       description: "Gestion des comptes",
       color: "from-blue-500 to-cyan-500",
-      glow: "shadow-blue-500/25"
+      glow: "shadow-blue-500/25",
+      stat: null
     },
     {
       href: "/admin/dashboard/orders",
@@ -24,7 +45,8 @@ export default function Dashboard() {
       title: "Commandes",
       description: "Suivi des ventes",
       color: "from-green-500 to-emerald-500",
-      glow: "shadow-green-500/25"
+      glow: "shadow-green-500/25",
+      stat: null
     },
     {
       href: "/admin/dashboard/chats",
@@ -32,7 +54,8 @@ export default function Dashboard() {
       title: "Chat Commande",
       description: "Support client",
       color: "from-orange-500 to-red-500",
-      glow: "shadow-orange-500/25"
+      glow: "shadow-orange-500/25",
+      stat: null
     },
     {
       href: "/admin/dashboard/stats",
@@ -40,7 +63,8 @@ export default function Dashboard() {
       title: "Statistiques",
       description: "Analyses & rapports",
       color: "from-indigo-500 to-purple-500",
-      glow: "shadow-indigo-500/25"
+      glow: "shadow-indigo-500/25",
+      stat: null
     },
     {
       href: "/admin/dashboard/notifications",
@@ -48,7 +72,8 @@ export default function Dashboard() {
       title: "Notifications",
       description: "Push & alertes",
       color: "from-pink-500 to-rose-500",
-      glow: "shadow-pink-500/25"
+      glow: "shadow-pink-500/25",
+      stat: null
     }
   ];
 
@@ -59,11 +84,25 @@ export default function Dashboard() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-pink-900/20 via-transparent to-transparent"></div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 cosmic-gradient-text glow-text">
-            Admin Dashboard
-          </h1>
+        {/* Header with Notification Bell */}
+        <div className="flex items-center justify-between mb-12">
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl font-bold text-white glow-text">
+              Admin Dashboard
+            </h1>
+            <p className="text-slate-400 mt-2">
+              Bienvenue, {user?.prenom || 'Admin'}
+            </p>
+          </div>
+          {mounted && user && (
+            <NotificationProvider userId={user.id}>
+              <NotificationBell />
+            </NotificationProvider>
+          )}
+        </div>
+
+        {/* Subtitle */}
+        <div className="text-center mb-12 -mt-8">
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
             Centre de contrôle complet pour gérer votre plateforme Chicha
           </p>
@@ -115,8 +154,26 @@ export default function Dashboard() {
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span>Système opérationnel</span>
           </div>
+          <p className="text-sm text-slate-500 mt-2">
+            © 2024 Chicha Shop - Admin Dashboard
+          </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-300 text-lg">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

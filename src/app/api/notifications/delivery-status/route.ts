@@ -12,9 +12,9 @@ interface DeliveryLog {
   sent_at: string;
   opened_at: string | null;
   users?: {
-    name: string;
-    email: string;
-  };
+    nom: string;
+    prenom: string;
+  } | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
     console.log('✅ Table accessible, fetching delivery logs...');
 
     // Récupérer les logs détaillés de livraison des notifications
+    // Note: Using inner join to get user info since FK might not exist
     const { data: deliveryLogs, error, count } = await supabase
       .from('notification_logs')
       .select(`
@@ -63,6 +64,26 @@ export async function GET(request: NextRequest) {
       `, { count: 'exact' })
       .order('sent_at', { ascending: false })
       .range(offset, offset + limit - 1);
+
+    // Fetch user info separately for each log
+    if (deliveryLogs && deliveryLogs.length > 0) {
+      const userIds = [...new Set(deliveryLogs.map(log => log.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, nom, prenom')
+          .in('id', userIds);
+        
+        const userMap = new Map(userData?.map(user => [user.id, user]) || []);
+        
+        // Attach user info to each log
+        deliveryLogs.forEach(log => {
+          if (log.user_id && userMap.has(log.user_id)) {
+            log.users = userMap.get(log.user_id);
+          }
+        });
+      }
+    }
 
     if (error) {
       console.error('❌ Error fetching delivery logs:', error);
