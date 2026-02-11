@@ -24,7 +24,7 @@ export const FloatingCartButton = () => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="relative p-4 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+          className="relative p-4 rounded-full glass-card shadow-lg"
           onClick={() => setIsCartOpen(true)}
         >
           <ShoppingBag className="w-6 h-6" />
