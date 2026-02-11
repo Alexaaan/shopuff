@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { CartProvider } from '@/lib/CartContext';
 import { AuthProvider } from '@/lib/AuthContext';
+import { ToastProvider } from '@/lib/ToastContext';
 import FirebaseInit from '@/components/FirebaseInit';
 import PWAInstallBanner from '@/components/PWAInstallBanner';
 
@@ -31,10 +32,12 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <AuthProvider>
       <CartProvider>
-        <FirebaseInit />
-        <ServiceWorkerRegistration />
-        <PWAInstallBanner />
-        {children}
+        <ToastProvider>
+          <FirebaseInit />
+          <ServiceWorkerRegistration />
+          <PWAInstallBanner />
+          {children}
+        </ToastProvider>
       </CartProvider>
     </AuthProvider>
   );

@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, Star, MessageCircle, Heart } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
+import { useToast } from '@/lib/ToastContext';
+import { FloatingCartButton } from '@/components/FloatingCartButton';
 
 interface Product {
   id: number;
@@ -34,6 +36,7 @@ export default function ProductPage() {
   const router = useRouter();
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [ratings, setRatings] = useState<Rating[]>([]);
@@ -41,6 +44,8 @@ export default function ProductPage() {
   const [userRating, setUserRating] = useState<number>(0);
   const [userComment, setUserComment] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [togglingFavorite, setTogglingFavorite] = useState(false);
 
   const productId = params.id as string;
 
@@ -48,8 +53,52 @@ export default function ProductPage() {
     if (productId) {
       loadProduct();
       loadRatings();
+      loadFavoriteStatus();
     }
   }, [productId]);
+
+  const loadFavoriteStatus = async () => {
+    if (!user) return;
+    try {
+      const response = await fetch('/api/favorites');
+      if (response.ok) {
+        const favorites = await response.json();
+        const isFav = favorites.some((f: { product_id: number }) => f.product_id === parseInt(productId));
+        setIsFavorite(isFav);
+      }
+    } catch (error) {
+      console.error('Error loading favorite status:', error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    if (!user) {
+      showToast('Connectez-vous pour ajouter aux favoris', 'warning');
+      return;
+    }
+    
+    setTogglingFavorite(true);
+    try {
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: parseInt(productId) })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setIsFavorite(data.isFavorite);
+        showToast(
+          data.isFavorite ? `${product?.nom} ajouté aux favoris` : `${product?.nom} retiré des favoris`,
+          'success'
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setTogglingFavorite(false);
+    }
+  };
 
   const loadProduct = async () => {
     try {
@@ -220,23 +269,37 @@ export default function ProductPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   disabled={product.stock === 0}
-                  onClick={() => addToCart({
-                    id: product.id,
-                    nom: product.nom,
-                    prix: product.prix,
-                    image: product.image
-                  })}
+                  onClick={() => {
+                    addToCart({
+                      id: product.id,
+                      nom: product.nom,
+                      prix: product.prix,
+                      image: product.image
+                    });
+                    showToast(`${product.nom} ajouté au panier`, 'success');
+                    if (navigator.vibrate) navigator.vibrate(50);
+                  }}
                 >
                   <ShoppingBag className="w-5 h-5 inline mr-2" />
                   Ajouter au panier
                 </motion.button>
 
                 <motion.button
-                  className="p-4 rounded-xl border-2 border-muted hover:border-primary transition-colors"
+                  className={`p-4 rounded-xl border-2 transition-colors ${
+                    isFavorite 
+                      ? 'border-red-500 bg-red-500/10' 
+                      : 'border-muted hover:border-primary'
+                  }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={toggleFavorite}
+                  disabled={togglingFavorite}
                 >
-                  <Heart className="w-5 h-5" />
+                  {isFavorite ? (
+                    <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                  ) : (
+                    <Heart className="w-5 h-5" />
+                  )}
                 </motion.button>
               </div>
             </div>
@@ -346,6 +409,9 @@ export default function ProductPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Floating Cart Button */}
+      <FloatingCartButton />
     </div>
   );
 }

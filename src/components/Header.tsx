@@ -47,10 +47,13 @@ export const Header = ({ onCartClick, onChatClick }: HeaderProps) => {
             <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
             {user && (
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push('/user/profile')}
+                  className="flex items-center gap-2 hover:text-foreground transition-colors"
+                >
                   <User className="w-4 h-4" />
                   <span>{user.prenom} {user.nom}</span>
-                </div>
+                </button>
 
                 {/* Notification Status Indicator */}
                 {notificationStatus !== 'none' && (
