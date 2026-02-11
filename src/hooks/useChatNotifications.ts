@@ -11,7 +11,15 @@ interface UseChatNotificationsProps {
 export function useChatNotifications({ onRefresh }: UseChatNotificationsProps) {
   const handleFCMMessage = useCallback((event: CustomEvent) => {
     const payload = event.detail;
+    
+    // Handle new order notifications
     if (payload?.data?.type === 'new_order' && payload.data.orderId) {
+      onRefresh();
+      playNotificationSound();
+    }
+    
+    // Handle chat message notifications
+    if (payload?.data?.type === 'chat_message' && payload.data.orderId) {
       onRefresh();
       playNotificationSound();
     }

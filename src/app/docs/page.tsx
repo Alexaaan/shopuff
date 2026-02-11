@@ -11,7 +11,6 @@ import { useEffect, useState } from 'react';
 export default function DocsPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [containerId] = useState('redoc-container');
 
   useEffect(() => {
     loadRedoc();
@@ -19,7 +18,6 @@ export default function DocsPage() {
 
   const loadRedoc = () => {
     try {
-      // Check if already loaded
       // @ts-ignore - Redoc is loaded globally
       if (window.Redoc) {
         initRedoc();
@@ -31,7 +29,7 @@ export default function DocsPage() {
       script.src = 'https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js';
       script.async = true;
       script.onload = () => initRedoc();
-      script.onerror = () => setError('Failed to load Redoc library');
+      script.onerror = () => setError('Failed to load documentation library');
       document.head.appendChild(script);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -39,7 +37,7 @@ export default function DocsPage() {
   };
 
   const initRedoc = () => {
-    // @ts-ignore - Redoc is loaded globally
+    // @ts-ignore
     if (window.Redoc) {
       // @ts-ignore
       window.Redoc.init(
@@ -67,7 +65,7 @@ export default function DocsPage() {
           showApiVersion: true,
           docExpansion: 'list'
         },
-        document.getElementById(containerId)
+        document.getElementById('redoc-container')
       );
       setIsLoaded(true);
     }
@@ -75,48 +73,62 @@ export default function DocsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a' }}>
-      <div id={containerId} style={{ minHeight: '100vh' }} />
+      <div id="redoc-container" style={{ minHeight: '100vh' }} />
       
-      {/* Loading Overlay */}
+      {/* Loading Overlay - only shown after mount */}
       {!isLoaded && !error && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          color: 'white',
-          zIndex: 9999
-        }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            border: '4px solid rgba(255,255,255,0.2)',
-            borderTopColor: '#667eea',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <p style={{ marginTop: '24px', fontSize: '18px' }}>Loading API Documentation...</p>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            color: 'white',
+            zIndex: 9999
+          }}
+          suppressHydrationWarning
+        >
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              border: '4px solid rgba(255,255,255,0.2)',
+              borderTopColor: '#667eea',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}
+            suppressHydrationWarning
+          />
+          <p
+            style={{ marginTop: '24px', fontSize: '18px' }}
+            suppressHydrationWarning
+          >
+            Loading API Documentation...
+          </p>
         </div>
       )}
 
       {/* Error State */}
       {error && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          color: 'white',
-          zIndex: 9999,
-          padding: '24px',
-          textAlign: 'center'
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            color: 'white',
+            zIndex: 9999,
+            padding: '24px',
+            textAlign: 'center'
+          }}
+          suppressHydrationWarning
+        >
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
           <h2 style={{ marginBottom: '8px' }}>Error Loading Documentation</h2>
           <p style={{ color: '#94a3b8', marginBottom: '24px' }}>{error}</p>
