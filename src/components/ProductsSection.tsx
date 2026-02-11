@@ -73,8 +73,8 @@ export const ProductsSection = () => {
   const activeLabel = FILTERS.find(f => f.id === activeFilter)?.label || 'Tout';
 
   return (
-    <section id="produits" className="relative py-16 md:py-24">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+    <section id="produits" className="relative py-8 md:py-12">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}

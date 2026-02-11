@@ -8,19 +8,19 @@ export const HeroSection = () => {
   return (
     <section
       id="accueil"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-0"
+      className="relative min-h-[70vh] flex items-center justify-center overflow-hidden pt-0"
     >
       {/* Background Effects */}
       <StarField />
 
       {/* Gradient Orbs */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 rounded-full bg-secondary/20 blur-3xl" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-accent/10 blur-3xl" />
+      <div className="absolute top-1/4 -left-20 w-64 h-64 rounded-full bg-primary/20 blur-3xl" />
+      <div className="absolute bottom-1/4 -right-20 w-64 h-64 rounded-full bg-secondary/20 blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-accent/10 blur-3xl" />
 
       {/* Content */}
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center max-w-4xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto">
           {/* Floating Elements */}
           <motion.div
             className="absolute top-0 left-10 md:left-20"

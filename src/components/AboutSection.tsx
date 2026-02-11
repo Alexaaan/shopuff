@@ -23,13 +23,13 @@ const features = [
 
 export const AboutSection = () => {
   return (
-    <section id="apropos" className="relative py-24 md:py-32 overflow-hidden">
+    <section id="apropos" className="relative py-12 md:py-16 overflow-hidden">
       {/* Background Elements */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-accent/10 blur-3xl" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/10 blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 items-center">
           {/* Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
